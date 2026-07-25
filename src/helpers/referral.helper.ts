@@ -1,0 +1,23 @@
+import { authRepository } from "@/modules/auth/auth.repository";
+import { randomBytes } from "node:crypto";
+
+export async function generateReferralCode(): Promise<string> {
+
+    while (true) {
+
+        const code =
+            "NX-" +
+            randomBytes(4)
+                .toString("hex")
+                .toUpperCase();
+
+        const exists =
+            await authRepository.findUserByReferralCode(
+                code
+            );
+
+        if (!exists) {
+            return code;
+        }
+    }
+}
