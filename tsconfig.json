@@ -19,10 +19,10 @@
             "@/*": ["./src/*"]
         }
     },
+
     "include": [
         "src/**/*.ts",
-        "src/**/*.d.ts",
-        "drizzle.config.ts"
+        "src/**/*.d.ts"
     ],
 
     "exclude": [
