@@ -49,7 +49,7 @@ export const env = {
 
     client: {
         url: process.env.CLIENT_URL ??
-            "http://localhost:3000",
+            "https://nexus-apd.vercel.app",
     },
 
     admin: {
