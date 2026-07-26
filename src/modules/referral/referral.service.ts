@@ -1,9 +1,8 @@
-import { db } from "@/database";
-
 import { referralRepository } from "./referral.repository";
 import { referralValidation } from "./referral.validation";
 import { userRepository } from "../user/user.repository";
 import { ReferralTreeNode } from "./referral.dto";
+import { db } from "../../database";
 
 export class ReferralService {
 

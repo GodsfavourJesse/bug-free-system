@@ -1,15 +1,15 @@
-import { db } from "@/database";
-import { DbExecutor } from "@/database/types/types";
 import { CreateCommissionDto, ProcessCommissionDto } from "./commission.dto";
 import { referralService } from "../referral/referral.service";
 import { commissionValidation } from "./commission.validation";
 import { commissionCalculator } from "./commission.calculator";
 import { walletService } from "../wallet/wallet.service";
 import { transactionService } from "../transaction/transaction.service";
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
 import { notificationService } from "../notification/notification.service";
-import { NotificationType } from "@/database/enums/notification.enum";
-import { COMMISSION_SOURCES } from "@/constants/commision.constants";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
+import { NotificationType } from "../../database/enums/notification.enum";
+import { COMMISSION_SOURCES } from "../../constants/commision.constants";
 
 export class CommissionService {
 

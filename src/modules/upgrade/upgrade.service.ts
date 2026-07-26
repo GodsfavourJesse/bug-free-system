@@ -1,14 +1,7 @@
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
 
-import { db } from "@/database";
-import { withTransaction } from "@/database/transaction/transaction";
-
-import { users } from "@/database/schema";
-
-import { UpgradeRequestStatus } from "@/database/enums/upgrade.enum";
-
-import { membershipPlanRepository } from "../membership-plan/memebershpPlan.repository";
+import { membershipPlanRepository } from "../membership-plan/membershpPlan.repository";
 import { membershipPlanValidation } from "../membership-plan/membershipPlan.validation";
 
 import { upgradeRepository } from "./upgrade.repository";
@@ -17,7 +10,12 @@ import { upgradeValidation } from "./upgrade.validation";
 import { CreateUpgradeRequestDto } from "./upgradeDto";
 import { UpgradeAlreadyProcessedError } from "./upgrade.errors";
 import { notificationService } from "../notification/notification.service";
-import { NotificationType } from "@/database/enums/notification.enum";
+import { withTransaction } from "../../database/transaction/transaction";
+import { users } from "../../database/schema";
+import { UpgradeRequestStatus } from "../../database/enums/upgrade.enum";
+import { NotificationType } from "../../database/enums/notification.enum";
+import { db } from "../../database";
+
 
 export class UpgradeService {
 

@@ -1,5 +1,5 @@
-import { authRepository } from "@/modules/auth/auth.repository";
-import { comparePassword } from "@/utils/hash";
+import { authRepository } from "../modules/auth/auth.repository";
+import { comparePassword } from "../utils/hash";
 
 export async function validateUserLogin(
     phone: string,

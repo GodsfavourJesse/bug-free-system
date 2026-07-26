@@ -1,9 +1,8 @@
 import { Router } from "express";
 
 import { withdrawalController } from "./withdrawal.controller";
-
-import { authenticate } from "@/middlewares/auth.middleware";
-import { authorize } from "@/middlewares/role.middleware";
+import { authenticate } from "../../middlewares/auth.middleware";
+import { authorize } from "../../middlewares/role.middleware";
 
 const router = Router();
 

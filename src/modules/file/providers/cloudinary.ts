@@ -1,5 +1,5 @@
-import { env } from "@/config";
 import { v2 as cloudinary } from "cloudinary";
+import { env } from "../../../config";
 
 
 // Configure Cloudinary.

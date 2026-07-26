@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { membershipPlanController } from "./membershipPlan.controller";
-import { authenticate } from "@/middlewares/auth.middleware";
+import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 

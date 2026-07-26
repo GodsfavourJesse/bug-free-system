@@ -1,8 +1,7 @@
 import { eq } from "drizzle-orm";
-
-import { users } from "@/database/schema";
-import { DbExecutor } from "@/database/types/types";
-import { db } from "@/database";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+import { users } from "../../database/schema";
 
 export class ReferralRepository {
 

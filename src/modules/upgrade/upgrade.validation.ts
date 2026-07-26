@@ -1,7 +1,4 @@
-import {
-    PaymentMethod,
-    UpgradeRequestStatus,
-} from "@/database/enums/upgrade.enum";
+import { PaymentMethod, UpgradeRequestStatus } from "../../database/enums/upgrade.enum";
 import { DuplicatePendingUpgradeRequestError, HighestMembershipPlanError, InvalidPaymentMethodError, InvalidUpgradeRequestStatusError, MembershipPlanNotFoundError, UnauthorizedUpgradeRequestError, UpgradeRequestNotFoundError } from "./upgrade.errors";
 
 

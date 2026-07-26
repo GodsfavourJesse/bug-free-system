@@ -1,4 +1,4 @@
-import { COMMISSION_RATES } from "@/constants/commision.constants";
+import { COMMISSION_RATES } from "../../constants/commision.constants";
 
 export class CommissionCalculator {
 

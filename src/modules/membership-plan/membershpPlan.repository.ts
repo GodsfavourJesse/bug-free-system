@@ -6,10 +6,10 @@ import {
     gt,
     lt,
 } from "drizzle-orm";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+import { membershipPlans } from "../../database/schema";
 
-import { db } from "@/database";
-import { membershipPlans } from "@/database/schema";
-import { DbExecutor } from "@/database/types/types";
 
 export class MembershipPlanRepository {
 

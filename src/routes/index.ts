@@ -2,17 +2,17 @@ import { Router } from "express";
 import authRoutes from "../modules/auth/auth.routes";
 import walletRoutes from "../modules/wallet/wallet.routes";
 import transactionRoutes from "../modules/transaction/transaction.routes";
-import membershipPlanRoutes from "@/modules/membership-plan/membershipPlan.routes";
+import membershipPlanRoutes from "../modules/membership-plan/membershipPlan.routes";
 import upgradeRoutes from "../modules/upgrade/upgrade.routes";
-import fileRoutes from "@/modules/file/file.routes";
-import notificationRoutes from "@/modules/notification/notification.routes";
-import referralRoutes from "@/modules/referral/referral.routes";
-import orderRoutes from "@/modules/order/order.routes";
-import withdrawalRoutes from "@/modules/withdrawal/withdrawal.routes";
+import fileRoutes from "../modules/file/file.routes";
+import notificationRoutes from "../modules/notification/notification.routes";
+import referralRoutes from "../modules/referral/referral.routes";
+import orderRoutes from "../modules/order/order.routes";
+import withdrawalRoutes from "../modules/withdrawal/withdrawal.routes";
 
-import adminUpgradeRoutes from "@/modules/admin/upgrade/adminUpgrade.routes";
-import adminUserRoutes from "@/modules/admin/users/admin-user.routes";
-import adminUserProfileRoutes from "@/modules/admin/user-profile/admin-user-profile.routes";
+import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
+import adminUserRoutes from "../modules/admin/users/admin-user.routes";
+import adminUserProfileRoutes from "../modules/admin/user-profile/admin-user-profile.routes";
 
 
 

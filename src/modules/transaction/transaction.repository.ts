@@ -1,8 +1,8 @@
 import { desc, eq } from "drizzle-orm";
-import { db } from "@/database";
-import { transactions } from "@/database/schema";
-import { TransactionStatus } from "@/database/enums/transaction.enum";
-import { DbExecutor } from "@/database/types/types";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+import { transactions } from "../../database/schema";
+import { TransactionStatus } from "../../database/enums/transaction.enum";
 
 export class TransactionRepository {
 

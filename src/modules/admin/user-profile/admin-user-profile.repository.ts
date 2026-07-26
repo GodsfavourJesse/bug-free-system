@@ -1,12 +1,7 @@
-import { db } from "@/database";
 import { eq } from "drizzle-orm";
-
-import { DbExecutor } from "@/database/types/types";
-
-import {
-    users,
-    membershipPlans,
-} from "@/database/schema";
+import { DbExecutor } from "../../../database/types/types";
+import { db } from "../../../database";
+import { membershipPlans, users } from "../../../database/schema";
 
 export class AdminUserProfileRepository {
 

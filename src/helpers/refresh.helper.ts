@@ -1,5 +1,5 @@
-import { authRepository } from "@/modules/auth/auth.repository";
-import { tokenService } from "@/modules/token/token.service";
+import { authRepository } from "../modules/auth/auth.repository";
+import { tokenService } from "../modules/token/token.service";
 
 export async function validateRefreshToken(
     token: string

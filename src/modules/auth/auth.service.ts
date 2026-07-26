@@ -1,21 +1,17 @@
 import { authRepository } from "./auth.repository";
 import { tokenService } from "../token/token.service";
-
 import { AdminLoginInput, LoginInput, RegisterInput } from "../../validators/validator";
-
 import { toUserResponse } from "../../utils/mappers/user.mapper";
-import { generateReferralCode } from "@/helpers/referral.helper";
-import { resolveReferral } from "@/helpers/register.helper";
-import { hashPassword } from "@/utils/hash";
-
-import { validateAdminLogin, validateUserLogin } from "@/helpers/login.helper";
-
-import { validateRefreshToken } from "@/helpers/refresh.helper";
-import { withTransaction } from "@/database/transaction/transaction";
 import { walletRepository } from "../wallet/wallet.repository";
-import { db } from "@/database";
 import { membershipPlanValidation } from "../membership-plan/membershipPlan.validation";
-import { membershipPlanRepository } from "../membership-plan/memebershpPlan.repository";
+import { membershipPlanRepository } from "../membership-plan/membershpPlan.repository";
+import { db } from "../../database";
+import { resolveReferral } from "../../helpers/register.helper";
+import { hashPassword } from "../../utils/hash";
+import { generateReferralCode } from "../../helpers/referral.helper";
+import { withTransaction } from "../../database/transaction/transaction";
+import { validateAdminLogin, validateUserLogin } from "../../helpers/login.helper";
+import { validateRefreshToken } from "../../helpers/refresh.helper";
 
 export class AuthService {
 

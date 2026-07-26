@@ -1,9 +1,9 @@
-import { UserRole } from "@/constants/roles";
 import {
     Request,
     Response,
     NextFunction,
 } from "express";
+import { UserRole } from "../constants/roles";
 
 export const authorize = (
     ...roles: UserRole[]

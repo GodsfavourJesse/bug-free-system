@@ -1,20 +1,17 @@
-import { db } from "@/database";
-import { withTransaction } from "@/database/transaction/transaction";
-
-import { DailyOrderStatus } from "@/database/enums/daily_order.enum";
-
 import { orderRepository } from "./order.repository";
 import { orderGenerator } from "./order.generator";
 import { orderValidation } from "./order.validation";
-
-import { walletService } from "@/modules/wallet/wallet.service";
-import { transactionService } from "@/modules/transaction/transaction.service";
-import { notificationService } from "@/modules/notification/notification.service";
-
 import { CompleteOrderItemDto, GenerateDailyOrdersDto } from "./order.dto";
-import { DbExecutor } from "@/database/types/types";
-import { NotificationType } from "@/database/enums/notification.enum";
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
+import { db } from "../../database";
+import { withTransaction } from "../../database/transaction/transaction";
+import { DailyOrderStatus } from "../../database/enums/daily_order.enum";
+import { DbExecutor } from "../../database/types/types";
+import { walletService } from "../wallet/wallet.service";
+import { transactionService } from "../transaction/transaction.service";
+import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
+import { notificationService } from "../notification/notification.service";
+import { NotificationType } from "../../database/enums/notification.enum";
+
 
 export class OrderService {
 

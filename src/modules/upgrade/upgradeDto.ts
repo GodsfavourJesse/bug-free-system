@@ -1,6 +1,7 @@
-import { PaymentMethod } from "@/database/enums/upgrade.enum";
-
 // Data sent by the authenticated user
+
+import { PaymentMethod } from "../../database/enums/upgrade.enum";
+
 // when requesting a membership upgrade.
 export interface CreateUpgradeRequestDto {
 

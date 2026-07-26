@@ -1,5 +1,4 @@
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
-
+import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
 
 export interface CommissionTransactionMetadata {
     buyerId: string;

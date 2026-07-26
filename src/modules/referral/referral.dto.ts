@@ -1,4 +1,4 @@
-import { users } from "@/database/schema";
+import { users } from "../../database/schema";
 
 export type ReferralUser =
     typeof users.$inferSelect;

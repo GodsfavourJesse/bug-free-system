@@ -1,11 +1,3 @@
-import { db } from "@/database";
-import { withTransaction } from "@/database/transaction/transaction";
-
-import { DbExecutor } from "@/database/types/types";
-
-import { walletService } from "@/modules/wallet/wallet.service";
-import { notificationService } from "@/modules/notification/notification.service";
-
 import { withdrawalRepository } from "./withdrawal.repository";
 import { withdrawalValidation } from "./withdrawal.validation";
 
@@ -15,12 +7,14 @@ import {
     MarkWithdrawalPaidDto,
     RejectWithdrawalDto,
 } from "./withdrawal.dto";
-
-import {
-    NotificationType,
-} from "@/database/enums/notification.enum";
 import { transactionService } from "../transaction/transaction.service";
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
+import { withTransaction } from "../../database/transaction/transaction";
+import { walletService } from "../wallet/wallet.service";
+import { notificationService } from "../notification/notification.service";
+import { NotificationType } from "../../database/enums/notification.enum";
+import { db } from "../../database";
+import { DbExecutor } from "../../database/types/types";
+import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
 
 export class WithdrawalService {
 

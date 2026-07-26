@@ -1,22 +1,17 @@
-import { db } from "@/database";
+import { NotificationType } from "../../../database/enums/notification.enum";
+import { TransactionStatus, TransactionType } from "../../../database/enums/transaction.enum";
+import { UpgradeRequestStatus } from "../../../database/enums/upgrade.enum";
+import { withTransaction } from "../../../database/transaction/transaction";
+import { commissionService } from "../../commission/commission.service";
+import { notificationService } from "../../notification/notification.service";
+import { transactionService } from "../../transaction/transaction.service";
+import { UpgradeAlreadyProcessedError } from "../../upgrade/upgrade.errors";
 
-import { withTransaction } from "@/database/transaction/transaction";
-
-import { upgradeRepository } from "@/modules/upgrade/upgrade.repository";
-
-import { upgradeValidation } from "@/modules/upgrade/upgrade.validation";
-
+import { upgradeRepository } from "../../upgrade/upgrade.repository";
+import { upgradeValidation } from "../../upgrade/upgrade.validation";
+import { userRepository } from "../../user/user.repository";
+import { walletService } from "../../wallet/wallet.service";
 import { adminUpgradeValidation } from "./adminUpgrade.validation";
-import { UpgradeRequestStatus } from "@/database/enums/upgrade.enum";
-import { UpgradeAlreadyProcessedError } from "@/modules/upgrade/upgrade.errors";
-import { userRepository } from "@/modules/user/user.repository";
-import { walletService } from "@/modules/wallet/wallet.service";
-import { transactionService } from "@/modules/transaction/transaction.service";
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
-import { notificationService } from "@/modules/notification/notification.service";
-import { NotificationType } from "@/database/enums/notification.enum";
-import { commissionService } from "@/modules/commission/commission.service";
-import { COMMISSION_SOURCES } from "@/constants/commision.constants";
 
 export class AdminUpgradeService {
 

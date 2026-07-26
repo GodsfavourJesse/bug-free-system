@@ -1,11 +1,9 @@
 import { and, desc,
     eq,
 } from "drizzle-orm";
+import { DbExecutor } from "../../database/types/types";
+import { notifications, users } from "../../database/schema";
 
-import { DbExecutor } from "@/database/types/types";
-
-import { notifications } from "@/database/schema";
-import { users } from "@/database/schema";
 
 export class NotificationRepository {
 

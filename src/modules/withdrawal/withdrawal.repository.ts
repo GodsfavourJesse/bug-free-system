@@ -3,17 +3,10 @@ import {
     desc,
     eq,
 } from "drizzle-orm";
-
-import { db } from "@/database";
-import { DbExecutor } from "@/database/types/types";
-
-import {
-    withdrawals,
-} from "@/database/schema";
-
-import {
-    WithdrawalStatus,
-} from "@/database/enums/withdrawal.enum";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+import { withdrawals } from "../../database/schema";
+import { WithdrawalStatus } from "../../database/enums/withdrawal.enum";
 
 export class WithdrawalRepository {
 

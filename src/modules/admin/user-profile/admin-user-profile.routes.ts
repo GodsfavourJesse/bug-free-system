@@ -1,20 +1,10 @@
 import { Router } from "express";
-
-import {
-    authenticate,
-} from "@/middlewares/auth.middleware";
-
-import {
-    authorize,
-} from "@/middlewares/role.middleware";
-
-import {
-    USER_ROLES,
-} from "@/constants/roles";
-
 import {
     adminUserProfileController,
 } from "./admin-user-profile.controller";
+import { authenticate } from "../../../middlewares/auth.middleware";
+import { authorize } from "../../../middlewares/role.middleware";
+import { USER_ROLES } from "../../../constants/roles";
 
 const router = Router();
 

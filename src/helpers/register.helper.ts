@@ -1,4 +1,4 @@
-import { authRepository } from "@/modules/auth/auth.repository";
+import { authRepository } from "../modules/auth/auth.repository";
 
 /**
  * Resolve the user who owns the referral code.

@@ -1,7 +1,3 @@
-import { walletService } from "@/modules/wallet/wallet.service";
-import { referralService } from "@/modules/referral/referral.service";
-import { transactionService } from "@/modules/transaction/transaction.service";
-
 import {
     adminUserProfileRepository,
 } from "./admin-user-profile.repository";
@@ -10,6 +6,9 @@ import {
     UserProfileDto,
 } from "./admin-user-profile.dto";
 import { UserNotFoundError } from "./admin-user-profile.errors";
+import { walletService } from "../../wallet/wallet.service";
+import { transactionService } from "../../transaction/transaction.service";
+import { referralService } from "../../referral/referral.service";
 
 
 export class AdminUserProfileService {

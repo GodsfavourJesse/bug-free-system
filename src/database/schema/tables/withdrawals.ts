@@ -10,8 +10,7 @@ import {
 
 import { users } from "./users";
 import { wallets } from "./wallets";
-
-import { WithdrawalStatus } from "@/database/enums/withdrawal.enum";
+import { WithdrawalStatus } from "../../enums/withdrawal.enum";
 
 export const withdrawalStatusEnum =
     pgEnum(

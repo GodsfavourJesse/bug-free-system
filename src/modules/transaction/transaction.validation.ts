@@ -1,5 +1,5 @@
-import { InvalidWalletAmountError } from "@/modules/wallet/wallet.errors";
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
+import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
+import { InvalidWalletAmountError } from "../wallet/wallet.errors";
 import { InvalidTransactionStatusError, InvalidTransactionTypeError, TransactionNotFoundError } from "./transaction.errors";
 
 

@@ -1,11 +1,3 @@
-import { db } from "@/database";
-import { withTransaction } from "@/database/transaction/transaction";
-import { DbExecutor } from "@/database/types/types";
-
-import {
-    NotificationType,
-} from "@/database/enums/notification.enum";
-
 import {
     PaginationDto,
     SearchUsersDto,
@@ -22,15 +14,17 @@ import {
 import {
     adminUserValidation,
 } from "./admin-user.validation";
-
-import {
-    notificationService,
-} from "@/modules/notification/notification.service";
 import { UserProfileDto } from "../user-profile/admin-user-profile.dto";
 import { UserNotFoundError } from "../user-profile/admin-user-profile.errors";
-import { walletService } from "@/modules/wallet/wallet.service";
-import { transactionService } from "@/modules/transaction/transaction.service";
-import { referralService } from "@/modules/referral/referral.service";
+import { DbExecutor } from "../../../database/types/types";
+import { db } from "../../../database";
+import { withTransaction } from "../../../database/transaction/transaction";
+import { notificationService } from "../../notification/notification.service";
+import { NotificationType } from "../../../database/enums/notification.enum";
+import { walletService } from "../../wallet/wallet.service";
+import { transactionService } from "../../transaction/transaction.service";
+import { referralService } from "../../referral/referral.service";
+
 
 export class AdminUserService {
 

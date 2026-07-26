@@ -1,10 +1,9 @@
 import { and, desc, eq } from "drizzle-orm";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+import { upgradeRequests } from "../../database/schema";
+import { UpgradeRequestStatus } from "../../database/enums/upgrade.enum";
 
-import { db } from "@/database";
-import { DbExecutor } from "@/database/types/types";
-
-import { upgradeRequests } from "@/database/schema";
-import { UpgradeRequestStatus } from "@/database/enums/upgrade.enum";
 
 export class UpgradeRepository {
 

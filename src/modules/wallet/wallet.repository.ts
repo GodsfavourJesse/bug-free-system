@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { DbExecutor } from "@/database/types/types";
-import { wallets } from "@/database/schema";
+import { DbExecutor } from "../../database/types/types";
+import { wallets } from "../../database/schema";
 
 // Drizzle transaction and database instances expose
 // the same query methods we use here, so both can be

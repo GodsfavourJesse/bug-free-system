@@ -1,8 +1,8 @@
 import { Router } from "express";
 
-import { authenticate } from "@/middlewares/auth.middleware";
 
 import { referralController } from "./referral.controller";
+import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 

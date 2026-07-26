@@ -1,10 +1,8 @@
 import { and, asc, count, desc, eq, gte, ilike, lte, or, SQL } from "drizzle-orm";
-
-import { db } from "@/database";
-import { users } from "@/database/schema";
-import { DbExecutor } from "@/database/types/types";
-
 import { PaginationDto, SearchUsersDto, FilterUsersDto } from "./admin-user.dto";
+import { DbExecutor } from "../../../database/types/types";
+import { db } from "../../../database";
+import { users } from "../../../database/schema";
 
 export function getPagination(dto: PaginationDto) {
     const page = dto.page ?? 1;

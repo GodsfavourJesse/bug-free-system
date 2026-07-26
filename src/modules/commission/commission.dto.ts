@@ -1,4 +1,4 @@
-import { CommissionSource } from "@/constants/commision.constants";
+import { CommissionSource } from "../../constants/commision.constants";
 
 /**
  * Data required to process a commission event.

@@ -1,4 +1,4 @@
-import { MAX_MESSAGE_LENGTH, MAX_TITLE_LENGTH } from "@/constants/notification.constants";
+import { MAX_MESSAGE_LENGTH, MAX_TITLE_LENGTH } from "../../constants/notification.constants";
 import {
     NotificationMessageTooLongError,
     NotificationTitleTooLongError,

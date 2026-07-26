@@ -1,5 +1,5 @@
-import { authRepository } from "@/modules/auth/auth.repository";
 import { randomBytes } from "node:crypto";
+import { authRepository } from "../modules/auth/auth.repository";
 
 export async function generateReferralCode(): Promise<string> {
 

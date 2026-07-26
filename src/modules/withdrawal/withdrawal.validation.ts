@@ -1,7 +1,4 @@
-import {
-    WithdrawalStatus,
-} from "@/database/enums/withdrawal.enum";
-
+import { WithdrawalStatus } from "../../database/enums/withdrawal.enum";
 import {
     InvalidWithdrawalAmountError,
     InsufficientWalletBalanceError,

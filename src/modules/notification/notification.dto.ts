@@ -1,4 +1,5 @@
-import { NotificationType } from "@/database/enums/notification.enum";
+import { NotificationType } from "../../database/enums/notification.enum";
+
 
 /**
  * Create notification.

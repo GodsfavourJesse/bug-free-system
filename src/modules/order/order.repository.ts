@@ -1,8 +1,9 @@
 import { and, asc, eq, inArray, lt } from "drizzle-orm";
-import { DbExecutor } from "@/database/types/types";
-import { dailyOrders, dailyOrderItems } from "@/database/schema";
 import { CreateDailyOrderDto, CreateOrderItemDto } from "./order.dto";
-import { DailyOrderItemStatus, DailyOrderStatus } from "@/database/enums/daily_order.enum";
+import { DbExecutor } from "../../database/types/types";
+import { dailyOrderItems, dailyOrders } from "../../database/schema";
+import { DailyOrderItemStatus, DailyOrderStatus } from "../../database/enums/daily_order.enum";
+
 
 export class OrderRepository {
 

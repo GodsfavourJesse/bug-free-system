@@ -1,11 +1,8 @@
-import { DailyOrderItemStatus, DailyOrderStatus } from "@/database/enums/daily_order.enum";
 import {
     UserNotEligibleForDailyOrdersError,
     MembershipNotEligibleForDailyOrdersError,
     DailyOrderNotFoundError,
     DailyOrderItemNotFoundError,
-    DailyOrderItemAlreadyCompletedError,
-    DailyOrderAlreadyCompletedError,
 } from "./order.errors";
 
 export class OrderValidation {

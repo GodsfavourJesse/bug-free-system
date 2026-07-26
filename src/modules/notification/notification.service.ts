@@ -1,10 +1,3 @@
-import { db } from "@/database";
-import { DbExecutor } from "@/database/types/types";
-
-import {
-    NotificationType,
-} from "@/database/enums/notification.enum";
-
 import {
     notificationRepository,
 } from "./notification.repository";
@@ -16,6 +9,8 @@ import {
 import {
     CreateNotificationDto,
 } from "./notification.dto";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
 
 export class NotificationService {
 

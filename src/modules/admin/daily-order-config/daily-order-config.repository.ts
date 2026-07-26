@@ -1,8 +1,7 @@
 import { and, eq } from "drizzle-orm";
-
-import { db } from "@/database";
-import { dailyOrderConfigs } from "@/database/schema";
-import { DbExecutor } from "@/database/types/types";
+import { dailyOrderConfigs } from "../../../database/schema";
+import { DbExecutor } from "../../../database/types/types";
+import { db } from "../../../database";
 
 export class DailyOrderConfigRepository {
 

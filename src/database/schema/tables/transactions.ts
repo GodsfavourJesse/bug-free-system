@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, decimal, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { wallets } from "./wallets";
-import { TransactionStatus, TransactionType } from "@/database/enums/transaction.enum";
+import { TransactionStatus, TransactionType } from "../../enums/transaction.enum";
 
 
 export const transactions = pgTable(

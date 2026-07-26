@@ -1,4 +1,4 @@
-import { MAX_COMMISSION_LEVEL } from "@/constants/commision.constants";
+import { MAX_COMMISSION_LEVEL } from "../../constants/commision.constants";
 import {
     CommissionError,
     IneligibleCommissionRecipientError,
