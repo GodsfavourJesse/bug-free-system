@@ -4,7 +4,7 @@ import {
     refreshTokens,
     users,
 } from "../../database/schema";
-import { DbExecutor } from "@/database/types/types";
+import { DbExecutor } from "../../database/types/types";
 
 export class AuthRepository {
 

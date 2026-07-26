@@ -1,8 +1,7 @@
 import { Router } from "express";
 
 import { walletController } from "./wallet.controller";
-
-import { authenticate } from "@/middlewares/auth.middleware";
+import { authenticate } from "../../middlewares/auth.middleware";
 
 
 const router = Router();

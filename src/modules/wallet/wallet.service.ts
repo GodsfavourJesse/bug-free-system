@@ -1,9 +1,10 @@
-import { db } from "@/database";
 import { walletRepository } from "./wallet.repository";
 import { WalletAlreadyExistsError } from "./wallet.errors";
 import { walletValidation } from "./wallet.validation";
-import { withTransaction } from "@/database/transaction/transaction";
-import { DbExecutor } from "@/database/types/types";
+import { withTransaction } from "../../database/transaction/transaction";
+import { DbExecutor } from "../../database/types/types";
+import { db } from "../../database";
+
 
 export class WalletService {
 
