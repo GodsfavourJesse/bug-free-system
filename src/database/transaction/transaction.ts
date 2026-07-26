@@ -1,4 +1,4 @@
-import { db } from "@/database";
+import { db } from "..";
 import { DbExecutor } from "../types/types";
 
 export async function withTransaction<T>(

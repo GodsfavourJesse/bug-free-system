@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { users } from "./users";
-import { NotificationType } from "@/database/enums/notification.enum";
+import { NotificationType } from "../../enums/notification.enum";
 
 export const notifications = pgTable(
     "notifications",

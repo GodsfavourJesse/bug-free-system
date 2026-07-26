@@ -3,8 +3,7 @@ import { pgTable, uuid, varchar, decimal, timestamp, text, jsonb, index, uniqueI
 import { users } from "./users";
 import { transactions } from "./transactions";
 import { membershipPlans } from "./membershipPlans";
-
-import { PaymentMethod, UpgradeRequestStatus } from "@/database/enums/upgrade.enum";
+import { PaymentMethod, UpgradeRequestStatus } from "../../enums/upgrade.enum";
 
 export const upgradeRequests = pgTable(
     "upgrade_requests",
