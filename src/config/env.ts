@@ -48,8 +48,10 @@ export const env = {
     },
 
     client: {
-        url: process.env.CLIENT_URL ??
-            "https://nexus-apd.vercel.app",
+        urls: (process.env.CLIENT_URLS ?? "")
+            .split(",")
+            .map(url => url.trim())
+            .filter(Boolean),
     },
 
     admin: {
