@@ -111,41 +111,13 @@ export class DashboardRepository {
         ]);
 
         return {
-
-            totalUsers:
-                Number(
-                    totalUsers[0].value,
-                ),
-
-            activeUsers:
-                Number(
-                    activeUsers[0].value,
-                ),
-
-            verifiedUsers:
-                Number(
-                    verifiedUsers[0].value,
-                ),
-
-            pendingUpgradeRequests:
-                Number(
-                    pendingUpgrades[0].value,
-                ),
-
-            pendingWithdrawals:
-                Number(
-                    pendingWithdrawals[0].value,
-                ),
-
-            completedTransactions:
-                Number(
-                    completedTransactions[0].value,
-                ),
-
-            revenue:
-                Number(
-                    revenue[0].value,
-                ),
+            totalUsers: Number(totalUsers[0].value),
+            activeUsers: Number(activeUsers[0].value),
+            verifiedUsers: Number(verifiedUsers[0].value),
+            pendingUpgradeRequests: Number(pendingUpgrades[0].value),
+            pendingWithdrawals: Number(pendingWithdrawals[0].value),
+            totalTransactions: Number(completedTransactions[0].value),
+            totalRevenue: Number(revenue[0].value),
         };
     }
 
@@ -275,41 +247,19 @@ export class DashboardRepository {
     ) {
         return executor
             .select({
-
-                id:
-                    withdrawals.id,
-
-                amount:
-                    withdrawals.amount,
-
-                accountName:
-                    withdrawals.accountName,
-
-                accountNumber:
-                    withdrawals.accountNumber,
-
-                bankName:
-                    withdrawals.bankName,
-
-                createdAt:
-                    withdrawals.createdAt,
-
+                id: withdrawals.id,
+                amount: withdrawals.amount,
+                status: withdrawals.status,          // add this
+                accountName: withdrawals.accountName,
+                accountNumber: withdrawals.accountNumber,
+                bankName: withdrawals.bankName,
+                createdAt: withdrawals.createdAt,
                 user: {
-
-                    id:
-                        users.id,
-
-                    phone:
-                        users.phone,
-
-                    email:
-                        users.email,
-
-                    referralCode:
-                        users.referralCode,
-
+                    id: users.id,
+                    phone: users.phone,
+                    email: users.email,
+                    referralCode: users.referralCode,
                 },
-
             })
             .from(
                 withdrawals,
@@ -444,13 +394,8 @@ export class DashboardRepository {
 
         return executor
             .select({
-                date: sql<string>`
-                    DATE(${users.createdAt})
-                `,
-
-                totalUsers: sql<number>`
-                    COUNT(*)
-                `,
+                date: sql<string>`DATE(${users.createdAt})`,
+                users: sql<number>`COUNT(*)`,   // renamed from totalUsers
             })
             .from( users )
             .where(

@@ -5,8 +5,6 @@ import { db } from "./database";
 
 const PORT = Number(process.env.PORT) || 5000;
 
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
-
 async function startServer() {
     try {
 
