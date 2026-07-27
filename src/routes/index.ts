@@ -10,11 +10,10 @@ import referralRoutes from "../modules/referral/referral.routes";
 import orderRoutes from "../modules/order/order.routes";
 import withdrawalRoutes from "../modules/withdrawal/withdrawal.routes";
 
+import adminDashboardRoutes from "../modules/admin/dashboard/dashboard.routes";
 import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
 import adminUserRoutes from "../modules/admin/users/admin-user.routes";
 import adminUserProfileRoutes from "../modules/admin/user-profile/admin-user-profile.routes";
-
-
 
 const router = Router();
 
@@ -71,6 +70,11 @@ router.use(
 
 
 // ADMIN
+
+router.use(
+    "/admin/dashboard",
+    adminDashboardRoutes,
+);
 
 router.use(
     "/admin/upgrade-requests",
