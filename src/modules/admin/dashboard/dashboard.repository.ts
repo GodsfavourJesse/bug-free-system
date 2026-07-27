@@ -214,62 +214,31 @@ export class DashboardRepository {
     ) {
 
         return executor
-
             .select({
-
-                id:
-                    upgradeRequests.id,
-
-                amount:
-                    upgradeRequests.amount,
-
-                paymentMethod:
-                    upgradeRequests.paymentMethod,
-
-                paymentProof:
-                    upgradeRequests.paymentProof,
-
-                createdAt:
-                    upgradeRequests.createdAt,
-
-                reference:
-                    upgradeRequests.reference,
+                id: upgradeRequests.id,
+                amount: upgradeRequests.amount,
+                status: upgradeRequests.status,
+                paymentMethod: upgradeRequests.paymentMethod,
+                paymentProof: upgradeRequests.paymentProof,
+                createdAt: upgradeRequests.createdAt,
+                reference: upgradeRequests.reference,
 
                 user: {
-
-                    id:
-                        users.id,
-
-                    phone:
-                        users.phone,
-
-                    email:
-                        users.email,
-
-                    referralCode:
-                        users.referralCode,
-
+                    id: users.id,
+                    phone: users.phone,
+                    email: users.email,
+                    referralCode: users.referralCode,
                 },
 
                 membership: {
-
-                    id:
-                        membershipPlans.id,
-
-                    name:
-                        membershipPlans.name,
-
-                    slug:
-                        membershipPlans.slug,
-
+                    id: membershipPlans.id,
+                    name: membershipPlans.name,
+                    slug: membershipPlans.slug,
                 },
-
             })
-
             .from(
                 upgradeRequests,
             )
-
             .leftJoin(
                 users,
                 eq(
@@ -277,7 +246,6 @@ export class DashboardRepository {
                     users.id,
                 ),
             )
-
             .leftJoin(
                 membershipPlans,
                 eq(
@@ -285,20 +253,17 @@ export class DashboardRepository {
                     membershipPlans.id,
                 ),
             )
-
             .where(
                 eq(
                     upgradeRequests.status,
                     UpgradeRequestStatus.PENDING,
                 ),
             )
-
             .orderBy(
                 desc(
                     upgradeRequests.createdAt,
                 ),
             )
-
             .limit(
                 limit,
             );
