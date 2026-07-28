@@ -14,6 +14,8 @@ import adminDashboardRoutes from "../modules/admin/dashboard/dashboard.routes";
 import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
 import adminUserRoutes from "../modules/admin/users/admin-user.routes";
 import adminUserProfileRoutes from "../modules/admin/user-profile/admin-user-profile.routes";
+import adminWithdrawalRoutes from "../modules/admin/withdrawal/adminWithdrawal.routes";
+import adminDailyOrderConfigRoutes from "../modules/daily-order-config/dailyOrderConfig.routes"
 
 const router = Router();
 
@@ -89,6 +91,16 @@ router.use(
 router.use(
     "/users",
     adminUserProfileRoutes,
+);
+
+router.use(
+    "/admin/withdrawals",
+    adminWithdrawalRoutes,
+);
+
+router.use(
+    "/admin/daily-order-configs",
+    adminDailyOrderConfigRoutes,
 );
 
 export default router;

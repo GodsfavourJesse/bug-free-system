@@ -4,6 +4,38 @@ import { adminUpgradeService } from "./adminUpgrade.service";
 
 export class AdminUpgradeController {
 
+    // GET /admin/upgrade-requests
+    async findAll(
+        req: Request,
+        res: Response,
+    ) {
+        const requests =
+            await adminUpgradeService.findAll();
+
+        return res.json({
+            success: true,
+            data: requests,
+        });
+    }
+
+    // GET /admin/upgrade-requests/:id
+    async findById(
+        req: Request,
+        res: Response,
+    ) {
+        const id = Array.isArray(req.params.id)
+            ? req.params.id[0]
+            : req.params.id;
+
+        const request =
+            await adminUpgradeService.findById(id);
+
+        return res.json({
+            success: true,
+            data: request,
+        });
+    }
+
     // POST /admin/upgrade-requests/:id/review
     async markUnderReview(
         req: Request,

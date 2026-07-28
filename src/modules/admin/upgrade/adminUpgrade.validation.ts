@@ -1,5 +1,6 @@
 import { UpgradeRequestStatus } from "../../../database/enums/upgrade.enum";
-import { UpgradeRequestNotPendingError } from "./adminUPgrade.errors";
+import { UpgradeRequestNotPendingError } from "./adminUpgrade.errors";
+
 
 export class AdminUpgradeValidation {
 

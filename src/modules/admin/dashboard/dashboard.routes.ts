@@ -8,7 +8,7 @@ import { USER_ROLES } from "../../../constants/roles";
 const router = Router();
 
 router.get(
-    "/dashboard",
+    "/",
     authenticate,
     authorize(USER_ROLES.ADMIN),
     dashboardController.getDashboard,
