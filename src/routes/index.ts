@@ -15,7 +15,7 @@ import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
 import adminUserRoutes from "../modules/admin/users/admin-user.routes";
 import adminUserProfileRoutes from "../modules/admin/user-profile/admin-user-profile.routes";
 import adminWithdrawalRoutes from "../modules/admin/withdrawal/adminWithdrawal.routes";
-import adminDailyOrderConfigRoutes from "../modules/daily-order-config/dailyOrderConfig.routes"
+import adminDailyOrderConfigRoutes from "../modules/admin/daily-order-config/dailyOrderConfig.routes"
 
 const router = Router();
 

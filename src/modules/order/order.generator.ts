@@ -1,7 +1,7 @@
 import { CreateDailyOrderDto, CreateOrderItemDto } from "./order.dto";
 import { orderRepository } from "./order.repository";
 import { membershipPlanService } from "../membership-plan/membershipPlan.service";
-import { dailyOrderConfigRepository } from "../admin/daily-order-config/daily-order-config.repository";
+import { dailyOrderConfigRepository } from "../admin/daily-order-config/dailyOrderConfig.repository";
 import { userRepository } from "../user/user.repository";
 import { DbExecutor } from "../../database/types/types";
 

@@ -9,7 +9,7 @@ export class DailyOrderConfigValidation {
         },
     >(
         config: T | null,
-    ) {
+    ): T {
         if (!config) {
             throw new Error(
                 "Daily order configuration not found.",
@@ -28,10 +28,29 @@ export class DailyOrderConfigValidation {
         },
     >(
         config: T,
-    ) {
+    ): T {
         if (!config.isActive) {
             throw new Error(
                 "Daily order configuration is inactive.",
+            );
+        }
+
+        return config;
+    }
+
+    /**
+     * Ensure configuration is inactive.
+     */
+    ensureInactive<
+        T extends {
+            isActive: boolean;
+        },
+    >(
+        config: T,
+    ): T {
+        if (config.isActive) {
+            throw new Error(
+                "Daily order configuration is already active.",
             );
         }
 
@@ -48,10 +67,8 @@ export class DailyOrderConfigValidation {
         },
     >(
         config: T,
-    ) {
-        if (
-            config.tasksPerDay <= 0
-        ) {
+    ): T {
+        if (config.tasksPerDay <= 0) {
             throw new Error(
                 "Daily order configuration has no tasks.",
             );
@@ -61,7 +78,8 @@ export class DailyOrderConfigValidation {
     }
 
     /**
-     * Ensure reward is valid.
+     * Ensure reward per task
+     * is valid.
      */
     ensureRewardConfigured<
         T extends {
@@ -69,11 +87,9 @@ export class DailyOrderConfigValidation {
         },
     >(
         config: T,
-    ) {
+    ): T {
         if (
-            Number(
-                config.rewardPerTask,
-            ) <= 0
+            Number(config.rewardPerTask) <= 0
         ) {
             throw new Error(
                 "Reward per task must be greater than zero.",
@@ -84,8 +100,8 @@ export class DailyOrderConfigValidation {
     }
 
     /**
-     * Ensure daily reward
-     * limit is valid.
+     * Ensure daily reward limit
+     * is valid.
      */
     ensureDailyRewardLimit<
         T extends {
@@ -93,11 +109,9 @@ export class DailyOrderConfigValidation {
         },
     >(
         config: T,
-    ) {
+    ): T {
         if (
-            Number(
-                config.dailyRewardLimit,
-            ) <= 0
+            Number(config.dailyRewardLimit) <= 0
         ) {
             throw new Error(
                 "Daily reward limit must be greater than zero.",
@@ -108,8 +122,9 @@ export class DailyOrderConfigValidation {
     }
 
     /**
-     * Ensure configuration
-     * is fully usable.
+     * Ensure the configuration
+     * is completely usable for
+     * generating daily orders.
      */
     ensureUsable<
         T extends {
@@ -120,7 +135,7 @@ export class DailyOrderConfigValidation {
         },
     >(
         config: T,
-    ) {
+    ): T {
         this.ensureActive(config);
         this.ensureTasksConfigured(config);
         this.ensureRewardConfigured(config);

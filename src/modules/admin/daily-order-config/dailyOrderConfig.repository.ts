@@ -1,11 +1,13 @@
 import { and, eq } from "drizzle-orm";
-import { dailyOrderConfigs } from "../../../database/schema";
 import { DbExecutor } from "../../../database/types/types";
 import { db } from "../../../database";
+import { dailyOrderConfigs } from "../../../database/schema";
 
 export class DailyOrderConfigRepository {
 
-    // Create a configuration.
+    /**
+     * Create a daily order configuration.
+     */
     async create(
         executor: DbExecutor = db,
         data: typeof dailyOrderConfigs.$inferInsert,
@@ -18,7 +20,20 @@ export class DailyOrderConfigRepository {
         return config;
     }
 
-    // Find configuration by ID.
+    /**
+     * Return every configuration.
+     */
+    async findAll(
+        executor: DbExecutor = db,
+    ) {
+        return executor
+            .select()
+            .from(dailyOrderConfigs);
+    }
+
+    /**
+     * Find one configuration by ID.
+     */
     async findById(
         executor: DbExecutor = db,
         id: string,
@@ -37,8 +52,10 @@ export class DailyOrderConfigRepository {
         return config ?? null;
     }
 
-    // Find the active configuration
-    // for a membership plan.
+    /**
+     * Return the active configuration
+     * for a membership plan.
+     */
     async findByMembershipPlanId(
         executor: DbExecutor = db,
         membershipPlanId: string,
@@ -63,38 +80,9 @@ export class DailyOrderConfigRepository {
         return config ?? null;
     }
 
-    // Return every configuration.
-    async findAll(
-        executor: DbExecutor = db,
-    ) {
-        return executor
-            .select()
-            .from(dailyOrderConfigs);
-    }
-
-    // Enable / Disable configuration.
-    async updateStatus(
-        executor: DbExecutor = db,
-        id: string,
-        isActive: boolean,
-    ) {
-        const [config] = await executor
-            .update(dailyOrderConfigs)
-            .set({
-                isActive,
-            })
-            .where(
-                eq(
-                    dailyOrderConfigs.id,
-                    id,
-                ),
-            )
-            .returning();
-
-        return config ?? null;
-    }
-
-    // Update configuration.
+    /**
+     * Update a configuration.
+     */
     async update(
         executor: DbExecutor = db,
         id: string,
@@ -116,7 +104,34 @@ export class DailyOrderConfigRepository {
         return config ?? null;
     }
 
-    // Delete configuration.
+    /**
+     * Activate or deactivate
+     * a configuration.
+     */
+    async updateStatus(
+        executor: DbExecutor = db,
+        id: string,
+        isActive: boolean,
+    ) {
+        const [config] = await executor
+            .update(dailyOrderConfigs)
+            .set({
+                isActive,
+            })
+            .where(
+                eq(
+                    dailyOrderConfigs.id,
+                    id,
+                ),
+            )
+            .returning();
+
+        return config ?? null;
+    }
+
+    /**
+     * Delete a configuration.
+     */
     async delete(
         executor: DbExecutor = db,
         id: string,
