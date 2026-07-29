@@ -9,6 +9,8 @@ import notificationRoutes from "../modules/notification/notification.routes";
 import referralRoutes from "../modules/referral/referral.routes";
 import orderRoutes from "../modules/order/order.routes";
 import withdrawalRoutes from "../modules/withdrawal/withdrawal.routes";
+import completedAdvertisementRoutes from "../modules/completed-advertisement/completedAdvertisement.routes";
+import productRoutes from "../modules/product/product.routes";
 
 import adminDashboardRoutes from "../modules/admin/dashboard/dashboard.routes";
 import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
@@ -16,6 +18,7 @@ import adminUserRoutes from "../modules/admin/users/admin-user.routes";
 import adminUserProfileRoutes from "../modules/admin/user-profile/admin-user-profile.routes";
 import adminWithdrawalRoutes from "../modules/admin/withdrawal/adminWithdrawal.routes";
 import adminDailyOrderConfigRoutes from "../modules/admin/daily-order-config/dailyOrderConfig.routes"
+import adminAdvertisementRoutes from "../modules/admin/advertisement/advertisement.routes";
 
 const router = Router();
 
@@ -66,8 +69,18 @@ router.use(
 );
 
 router.use(
+    "/completed-advertisements",
+    completedAdvertisementRoutes,
+);
+
+router.use(
     "/withdrawals",
     withdrawalRoutes,
+);
+
+router.use(
+    "/products",
+    productRoutes,
 );
 
 
@@ -89,7 +102,7 @@ router.use(
 );
 
 router.use(
-    "/users",
+    "/admin/user-profile",
     adminUserProfileRoutes,
 );
 
@@ -101,6 +114,11 @@ router.use(
 router.use(
     "/admin/daily-order-configs",
     adminDailyOrderConfigRoutes,
+);
+
+router.use(
+    "/admin/advertisements",
+    adminAdvertisementRoutes,
 );
 
 export default router;

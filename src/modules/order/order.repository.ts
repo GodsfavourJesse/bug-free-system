@@ -58,8 +58,7 @@ export class OrderRepository {
                             item.reward,
 
                         advertisementId:
-                            item.advertisementId ??
-                            null,
+                            item.advertisementId,
                     }),
                 ),
             )

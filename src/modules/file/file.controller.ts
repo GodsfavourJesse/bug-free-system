@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import { fileService } from "./file.service";
 import { fileValidation } from "./file.validation";
-import { UploadFolders } from "./fileDto";
+import { UploadFolder, UploadFolders } from "./fileDto";
 
 /**
  * File Controller
@@ -17,15 +17,27 @@ export class FileController {
         req: Request,
         res: Response,
     ) {
+        const file =
+            fileValidation.ensureFileExists(
+                req.file,
+            );
 
-        const file = fileValidation.ensureFileExists(
-            req.file,
-        );
+        const requestedFolder =
+            req.body.folder as UploadFolder | undefined;
 
-        const result = await fileService.uploadFile(
-            file,
-            UploadFolders.PAYMENT_PROOFS,
-        );
+        const folder: UploadFolder =
+            requestedFolder &&
+            Object.values(UploadFolders).includes(
+                requestedFolder,
+            )
+                ? requestedFolder
+                : UploadFolders.DOCUMENTS;
+
+        const result =
+            await fileService.uploadFile(
+                file,
+                folder,
+            );
 
         return res.status(201).json({
             success: true,

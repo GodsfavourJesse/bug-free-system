@@ -1,6 +1,6 @@
 import { membershipPlanValidation } from "./membershipPlan.validation";
 import { eq } from "drizzle-orm";
-import { membershipPlanRepository } from "./membershpPlan.repository";
+import { membershipPlanRepository } from "./membershipPlan.repository";
 import { db } from "../../database";
 import { users } from "../../database/schema";
 

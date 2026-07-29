@@ -4,7 +4,7 @@ import { AdminLoginInput, LoginInput, RegisterInput } from "../../validators/val
 import { toUserResponse } from "../../utils/mappers/user.mapper";
 import { walletRepository } from "../wallet/wallet.repository";
 import { membershipPlanValidation } from "../membership-plan/membershipPlan.validation";
-import { membershipPlanRepository } from "../membership-plan/membershpPlan.repository";
+import { membershipPlanRepository } from "../membership-plan/membershipPlan.repository";
 import { db } from "../../database";
 import { resolveReferral } from "../../helpers/register.helper";
 import { hashPassword } from "../../utils/hash";

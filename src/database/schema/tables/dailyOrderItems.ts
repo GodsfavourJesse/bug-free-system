@@ -1,12 +1,6 @@
-import {
-    pgTable,
-    uuid,
-    numeric,
-    integer,
-    timestamp,
-    pgEnum,
-} from "drizzle-orm/pg-core";
+import { pgTable, uuid, numeric, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { dailyOrders } from "./dailyOrders";
+import { advertisements } from "./advertisements";
 
 
 export const dailyOrderItemStatusEnum =
@@ -41,10 +35,10 @@ export const dailyOrderItems =
                 "sequence",
             ).notNull(),
 
-            // Future advertisement.
-            advertisementId: uuid(
-                "advertisement_id",
-            ),
+            // Advertisement assigned to this task.
+            advertisementId: uuid("advertisement_id")
+                .references(() => advertisements.id)
+                .notNull(),
 
             reward: numeric(
                 "reward",

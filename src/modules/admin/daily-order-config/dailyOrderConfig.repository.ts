@@ -1,12 +1,17 @@
-import { and, eq } from "drizzle-orm";
-import { DbExecutor } from "../../../database/types/types";
+import { and, desc, eq } from "drizzle-orm";
+
 import { db } from "../../../database";
-import { dailyOrderConfigs } from "../../../database/schema";
+import { DbExecutor } from "../../../database/types/types";
+
+import {
+    dailyOrderConfigs,
+    membershipPlans,
+} from "../../../database/schema";
 
 export class DailyOrderConfigRepository {
 
     /**
-     * Create a daily order configuration.
+     * Create configuration.
      */
     async create(
         executor: DbExecutor = db,
@@ -27,61 +32,132 @@ export class DailyOrderConfigRepository {
         executor: DbExecutor = db,
     ) {
         return executor
-            .select()
-            .from(dailyOrderConfigs);
+            .select({
+                id: dailyOrderConfigs.id,
+
+                membershipPlanId:
+                    dailyOrderConfigs.membershipPlanId,
+
+                tasksPerDay:
+                    dailyOrderConfigs.tasksPerDay,
+
+                rewardPerTask:
+                    dailyOrderConfigs.rewardPerTask,
+
+                dailyRewardLimit:
+                    dailyOrderConfigs.dailyRewardLimit,
+
+                isActive:
+                    dailyOrderConfigs.isActive,
+
+                createdAt:
+                    dailyOrderConfigs.createdAt,
+
+                updatedAt:
+                    dailyOrderConfigs.updatedAt,
+
+                membershipPlan: {
+                    id: membershipPlans.id,
+                    name: membershipPlans.name,
+                },
+            })
+            .from(dailyOrderConfigs)
+            .leftJoin(
+                membershipPlans,
+                eq(
+                    dailyOrderConfigs.membershipPlanId,
+                    membershipPlans.id,
+                ),
+            );
     }
 
     /**
-     * Find one configuration by ID.
+     * Find one configuration.
      */
     async findById(
         executor: DbExecutor = db,
         id: string,
     ) {
-        const [config] = await executor
-            .select()
-            .from(dailyOrderConfigs)
-            .where(
-                eq(
-                    dailyOrderConfigs.id,
-                    id,
-                ),
-            )
-            .limit(1);
+        const [config] =
+            await executor
+                .select({
+                    id: dailyOrderConfigs.id,
+
+                    membershipPlanId:
+                        dailyOrderConfigs.membershipPlanId,
+
+                    tasksPerDay:
+                        dailyOrderConfigs.tasksPerDay,
+
+                    rewardPerTask:
+                        dailyOrderConfigs.rewardPerTask,
+
+                    dailyRewardLimit:
+                        dailyOrderConfigs.dailyRewardLimit,
+
+                    isActive:
+                        dailyOrderConfigs.isActive,
+
+                    createdAt:
+                        dailyOrderConfigs.createdAt,
+
+                    updatedAt:
+                        dailyOrderConfigs.updatedAt,
+
+                    membershipPlan: {
+                        id: membershipPlans.id,
+                        name: membershipPlans.name,
+                    },
+                })
+                .from(dailyOrderConfigs)
+                .leftJoin(
+                    membershipPlans,
+                    eq(
+                        dailyOrderConfigs.membershipPlanId,
+                        membershipPlans.id,
+                    ),
+                )
+                .where(
+                    eq(
+                        dailyOrderConfigs.id,
+                        id,
+                    ),
+                )
+                .limit(1);
 
         return config ?? null;
     }
 
     /**
-     * Return the active configuration
-     * for a membership plan.
+     * Find active configuration for a plan.
      */
     async findByMembershipPlanId(
         executor: DbExecutor = db,
         membershipPlanId: string,
     ) {
-        const [config] = await executor
-            .select()
-            .from(dailyOrderConfigs)
-            .where(
-                and(
-                    eq(
-                        dailyOrderConfigs.membershipPlanId,
-                        membershipPlanId,
+        const [config] =
+            await executor
+                .select()
+                .from(dailyOrderConfigs)
+                .where(
+                    and(
+                        eq(
+                            dailyOrderConfigs.membershipPlanId,
+                            membershipPlanId,
+                        ),
+                        eq(
+                            dailyOrderConfigs.isActive,
+                            true,
+                        ),
                     ),
-                    eq(
-                        dailyOrderConfigs.isActive,
-                        true,
-                    ),
-                ),
-            )
-            .limit(1);
+                )
+                .limit(1);
 
         return config ?? null;
     }
 
     /**
-     * Update a configuration.
+     * Update configuration.
      */
     async update(
         executor: DbExecutor = db,
@@ -90,61 +166,63 @@ export class DailyOrderConfigRepository {
             typeof dailyOrderConfigs.$inferInsert
         >,
     ) {
-        const [config] = await executor
-            .update(dailyOrderConfigs)
-            .set(data)
-            .where(
-                eq(
-                    dailyOrderConfigs.id,
-                    id,
-                ),
-            )
-            .returning();
+        const [config] =
+            await executor
+                .update(dailyOrderConfigs)
+                .set(data)
+                .where(
+                    eq(
+                        dailyOrderConfigs.id,
+                        id,
+                    ),
+                )
+                .returning();
 
         return config ?? null;
     }
 
     /**
-     * Activate or deactivate
-     * a configuration.
+     * Activate/Deactivate.
      */
     async updateStatus(
         executor: DbExecutor = db,
         id: string,
         isActive: boolean,
     ) {
-        const [config] = await executor
-            .update(dailyOrderConfigs)
-            .set({
-                isActive,
-            })
-            .where(
-                eq(
-                    dailyOrderConfigs.id,
-                    id,
-                ),
-            )
-            .returning();
+        const [config] =
+            await executor
+                .update(dailyOrderConfigs)
+                .set({
+                    isActive,
+                })
+                .where(
+                    eq(
+                        dailyOrderConfigs.id,
+                        id,
+                    ),
+                )
+                .returning();
 
         return config ?? null;
     }
 
     /**
-     * Delete a configuration.
+     * Delete configuration.
      */
     async delete(
         executor: DbExecutor = db,
         id: string,
     ) {
-        const [config] = await executor
-            .delete(dailyOrderConfigs)
-            .where(
-                eq(
-                    dailyOrderConfigs.id,
-                    id,
-                ),
-            )
-            .returning();
+        const [config] =
+            await executor
+                .delete(dailyOrderConfigs)
+                .where(
+                    eq(
+                        dailyOrderConfigs.id,
+                        id,
+                    ),
+                )
+                .returning();
 
         return config ?? null;
     }

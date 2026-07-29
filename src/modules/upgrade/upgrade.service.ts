@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
 
-import { membershipPlanRepository } from "../membership-plan/membershpPlan.repository";
+import { membershipPlanRepository } from "../membership-plan/membershipPlan.repository";
 import { membershipPlanValidation } from "../membership-plan/membershipPlan.validation";
 
 import { upgradeRepository } from "./upgrade.repository";

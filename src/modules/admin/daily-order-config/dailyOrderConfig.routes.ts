@@ -51,7 +51,7 @@ router.post(
  *
  * PATCH /admin/daily-order-configs/:id
  */
-router.patch(
+router.put(
     "/:id",
     adminDailyOrderConfigController.update,
 );

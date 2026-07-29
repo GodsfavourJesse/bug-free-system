@@ -9,3 +9,5 @@ export * from "./dailyOrderConfigs";
 export * from "./dailyOrders";
 export * from "./dailyOrderItems";
 export * from "./withdrawals";
+export * from "./advertisements";
+export * from "./completedAdvertisement";
