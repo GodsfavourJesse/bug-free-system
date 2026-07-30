@@ -40,6 +40,12 @@ export const users = pgTable(
             length: 255,
         }).notNull(),
 
+        country: varchar("country", {
+            length: 100,
+        })
+            .default("Nigeria")
+            .notNull(),
+
         role: userRoleEnum("role")
             .default("user")
             .notNull(),

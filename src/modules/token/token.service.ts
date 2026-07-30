@@ -35,7 +35,7 @@ export class TokenService {
         this.jwtSecret = jwtSecret;
         this.jwtRefreshSecret = jwtRefreshSecret;
         this.accessExpiresIn =
-            (process.env.JWT_EXPIRES_IN as SignOptions["expiresIn"]) || "15m";
+            (process.env.JWT_EXPIRES_IN as SignOptions["expiresIn"]) || "2h";
 
         this.refreshExpiresIn =
             (process.env.JWT_REFRESH_EXPIRES_IN as SignOptions["expiresIn"]) || "7d";

@@ -22,6 +22,7 @@ export class AuthService {
             phone,
             password,
             referral,
+            country,
         } = data;
 
         const existingUser =
@@ -51,6 +52,7 @@ export class AuthService {
                     {
                         phone,
                         password: hashedPassword,
+                        country,
                         referralCode,
                         referredBy,
                         membershipPlanId: internshipPlan.id,

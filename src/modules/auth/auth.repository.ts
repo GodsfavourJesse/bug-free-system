@@ -84,6 +84,7 @@ export class AuthRepository {
             referralCode: string;
             referredBy: string | null;
             membershipPlanId: string;
+            country: string;
             email?: string;
             role?: "admin" | "user";
         }
@@ -93,6 +94,7 @@ export class AuthRepository {
             .values({
                 phone: data.phone,
                 password: data.password,
+                country: data.country,
                 email: data.email ?? null,
                 referralCode: data.referralCode,
                 referredBy: data.referredBy,

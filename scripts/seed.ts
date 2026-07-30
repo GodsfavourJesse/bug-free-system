@@ -232,6 +232,8 @@ async function seedAdmin() {
 
             role: "admin",
 
+            country: "Nigeria",
+
             membershipPlanId: null,
 
             referralCode: process.env.ADMIN_REFERRAL_CODE!,

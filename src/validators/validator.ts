@@ -22,6 +22,11 @@ export const registerSchema = z
 
         confirmPassword: z.string(),
 
+        country: z
+            .string()
+            .trim()
+            .min(2, "Country is required."),
+
         referral:z
             .string()
             .trim()
