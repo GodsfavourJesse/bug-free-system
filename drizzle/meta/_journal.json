@@ -71,6 +71,13 @@
       "when": 1785385092666,
       "tag": "0009_chilly_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785421697870,
+      "tag": "0010_cloudy_wonder_man",
+      "breakpoints": true
     }
   ]
 }

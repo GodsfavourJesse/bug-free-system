@@ -99,18 +99,6 @@ export const advertisements = pgTable(
         ).notNull(),
 
         /**
-         * Electronics
-         * Fashion
-         * Crypto
-         */
-        category: varchar(
-            "category",
-            {
-                length: 120,
-            },
-        ).notNull(),
-
-        /**
          * Higher priority
          * advertisements appear first.
          */

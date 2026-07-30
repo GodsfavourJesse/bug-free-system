@@ -8,6 +8,8 @@ export const toUserResponse = (user: User) => ({
     email: user.email,
     role: user.role,
 
+    country: user.country,
+
     referralCode: user.referralCode,
 
     isVerified: user.isVerified,

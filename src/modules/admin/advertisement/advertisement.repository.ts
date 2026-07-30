@@ -148,25 +148,6 @@ export class AdvertisementRepository {
             .limit(limit);
     }
 
-    async findByCategory(
-        executor: DbExecutor = db,
-        category: string,
-    ) {
-        return executor
-            .select()
-            .from(advertisements)
-            .where(
-                eq(
-                    advertisements.category,
-                    category,
-                ),
-            )
-            .orderBy(
-                desc(advertisements.priority),
-                desc(advertisements.createdAt),
-            );
-    }
-
     async findByStatus(
         executor: DbExecutor = db,
         status: AdvertisementStatus,
