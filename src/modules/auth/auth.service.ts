@@ -52,10 +52,10 @@ export class AuthService {
                     {
                         phone,
                         password: hashedPassword,
-                        country,
                         referralCode,
                         referredBy,
                         membershipPlanId: internshipPlan.id,
+                        country: country || "Nigeria",
                     },
                 );
 

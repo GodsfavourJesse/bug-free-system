@@ -25,7 +25,7 @@ export const registerSchema = z
         country: z
             .string()
             .trim()
-            .min(2, "Country is required."),
+            .optional(),
 
         referral:z
             .string()
