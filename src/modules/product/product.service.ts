@@ -5,6 +5,15 @@ import { rewardEngineService } from "../reward-engine/rewardEngine.service";
 
 export class ProductService {
 
+    async getDashboard(
+        userId: string,
+    ) {
+        return productRepository.getDashboard(
+            userId,
+        );
+
+    }
+
     /**
      * Get products available
      * to the authenticated user.

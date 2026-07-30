@@ -15,6 +15,12 @@ router.get(
     productController.getProducts,
 );
 
+router.get(
+    "/dashboard",
+    authenticate,
+    productController.getDashboard,
+);
+
 /**
  * Get a single product.
  *

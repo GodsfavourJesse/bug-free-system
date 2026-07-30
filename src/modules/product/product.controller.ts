@@ -9,6 +9,32 @@ import { productService } from "./product.service";
 
 export class ProductController {
 
+    getDashboard = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) => {
+
+        try {
+
+            const dashboard =
+                await productService.getDashboard(
+                    req.user!.id,
+                );
+
+            res.status(200).json({
+                success: true,
+                message:
+                    "Product dashboard retrieved successfully.",
+                data: dashboard,
+            });
+
+        } catch (error) {
+            next(error);
+        }
+
+    };
+
     /**
      * Get products available
      * to the authenticated user.

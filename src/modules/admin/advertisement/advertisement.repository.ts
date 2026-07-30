@@ -1,8 +1,11 @@
 import {
+    and,
     asc,
     desc,
     eq,
+    inArray,
     InferInsertModel,
+    not,
     sql,
 } from "drizzle-orm";
 
@@ -284,6 +287,36 @@ export class AdvertisementRepository {
 
         return advertisement;
     }
+
+    async findActiveExcluding(
+        executor: DbExecutor = db,
+        excludedIds: string[],
+    ) {
+
+        if (excludedIds.length === 0) {
+            return this.findActive(executor);
+        }
+
+        return executor
+            .select()
+            .from(advertisements)
+            .where(
+                and(
+                    eq(
+                        advertisements.status,
+                        AdvertisementStatus.ACTIVE,
+                    ),
+                    not(
+                        inArray(
+                            advertisements.id,
+                            excludedIds,
+                        ),
+                    ),
+                ),
+            );
+
+    }
+    
 
 }
 
