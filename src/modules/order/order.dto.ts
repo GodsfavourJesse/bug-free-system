@@ -11,7 +11,7 @@ export interface CreateOrderItemDto {
     dailyOrderId: string;
     sequence: number;
     reward: string;
-    advertisementId?: string;
+    advertisementId?: string | null;
 }
 
 export interface CompleteOrderItemDto {

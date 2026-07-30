@@ -5,7 +5,6 @@ import { withTransaction } from "../../database/transaction/transaction";
 import { DbExecutor } from "../../database/types/types";
 import { db } from "../../database";
 
-
 export class WalletService {
 
     // Create a wallet for a new user.

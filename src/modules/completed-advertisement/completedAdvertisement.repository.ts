@@ -1,9 +1,4 @@
-import {
-    and,
-    count,
-    desc,
-    eq,
-} from "drizzle-orm";
+import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { DbExecutor } from "../../database/types/types";
 import { db } from "../../database";
 import { completedAdvertisements } from "../../database/schema";
@@ -101,7 +96,54 @@ export class CompletedAdvertisementRepository {
 
         return result.count;
     }
+
+    async countCompletedToday(
+        executor: DbExecutor = db,
+        userId: string,
+    ) {
+        const startOfToday = new Date();
+
+        startOfToday.setHours(
+            0,
+            0,
+            0,
+            0,
+        );
+
+        const startOfTomorrow =
+            new Date(startOfToday);
+
+        startOfTomorrow.setDate(
+            startOfTomorrow.getDate() + 1,
+        );
+
+        const [{ count }] =
+            await executor
+                .select({
+                    count: sql<number>`count(*)`,
+                })
+                .from(
+                    completedAdvertisements,
+                )
+                .where(
+                    and(
+                        eq(
+                            completedAdvertisements.userId,
+                            userId,
+                        ),
+                        gte(
+                            completedAdvertisements.completedAt,
+                            startOfToday,
+                        ),
+                        lt(
+                            completedAdvertisements.completedAt,
+                            startOfTomorrow,
+                        ),
+                    ),
+                );
+
+        return Number(count);
+    }
 }
 
-export const completedAdvertisementRepository =
-    new CompletedAdvertisementRepository();
+export const completedAdvertisementRepository = new CompletedAdvertisementRepository();

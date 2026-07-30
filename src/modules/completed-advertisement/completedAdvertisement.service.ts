@@ -74,6 +74,16 @@ export class CompletedAdvertisementService {
             advertisementId,
         );
     }
+
+    async countCompletedToday(
+        userId: string,
+    ): Promise<number> {
+
+        return completedAdvertisementRepository.countCompletedToday(
+            undefined,
+            userId,
+        );
+    }
 }
 
 export const completedAdvertisementService =

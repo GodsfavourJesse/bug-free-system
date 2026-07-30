@@ -1,7 +1,7 @@
 import { productRepository } from "./product.repository";
 import { productValidation } from "./product.validation";
 
-import { completedAdvertisementService } from "../completed-advertisement/completedAdvertisement.service";
+import { rewardEngineService } from "../reward-engine/rewardEngine.service";
 
 export class ProductService {
 
@@ -89,7 +89,7 @@ export class ProductService {
             existing,
         );
 
-        return completedAdvertisementService.complete({
+        return rewardEngineService.processCompletion({
             userId,
             advertisementId: productId,
         });

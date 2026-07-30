@@ -1,17 +1,23 @@
 import { orderRepository } from "./order.repository";
 import { orderGenerator } from "./order.generator";
 import { orderValidation } from "./order.validation";
-import { CompleteOrderItemDto, GenerateDailyOrdersDto } from "./order.dto";
+import {
+    CompleteOrderItemDto,
+    GenerateDailyOrdersDto,
+} from "./order.dto";
+
 import { db } from "../../database";
 import { withTransaction } from "../../database/transaction/transaction";
-import { DailyOrderStatus } from "../../database/enums/daily_order.enum";
-import { DbExecutor } from "../../database/types/types";
-import { walletService } from "../wallet/wallet.service";
-import { transactionService } from "../transaction/transaction.service";
-import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
-import { notificationService } from "../notification/notification.service";
-import { NotificationType } from "../../database/enums/notification.enum";
 
+import { DailyOrderStatus } from "../../database/enums/daily_order.enum";
+import {
+    TransactionType,
+} from "../../database/enums/transaction.enum";
+import {
+    NotificationType,
+} from "../../database/enums/notification.enum";
+
+import { rewardEngineService } from "../reward-engine/rewardEngine.service";
 
 export class OrderService {
 
@@ -148,7 +154,6 @@ export class OrderService {
                 const completedTasks =
                     order.completedTasks + 1;
 
-                // Determine new status.
                 const status =
                     completedTasks >=
                     order.requiredTasks
@@ -163,8 +168,7 @@ export class OrderService {
                     status,
                 );
 
-                // If every task is completed,
-                // finish the daily order.
+                // Finish daily order when all tasks are done.
                 if (
                     completedTasks >=
                     order.requiredTasks
@@ -204,135 +208,48 @@ export class OrderService {
             order,
         );
 
-        // Mark order completed.
+        // Mark the order as completed.
         await orderRepository.completeOrder(
             tx,
             order.id,
             order.totalReward,
         );
 
-        // Credit reward.
-        await this.creditReward(
+        // Delegate all reward processing
+        // to the Reward Engine.
+        await rewardEngineService.creditReward(
             tx,
-            order.userId,
-            Number(order.totalReward),
-        );
-
-        // Create transaction.
-        await this.createRewardTransaction(
-            tx,
-            order.userId,
-            Number(order.totalReward),
-        );
-
-        // Notify user.
-        await this.notifyReward(
-            tx,
-            order.userId,
-            order.totalReward,
-        );
-    }
-
-    // Credit the user's wallet after
-    // completing every task.
-    async creditReward(
-        executor: DbExecutor,
-        userId: string,
-        amount: number,
-    ) {
-
-        await walletService.credit(
-            executor,
-            userId,
-            amount,
-        );
-    }
-
-    // Create the reward transaction.
-    async createRewardTransaction(
-        executor: DbExecutor,
-        userId: string,
-        amount: number,
-    ) {
-
-        const wallet =
-            await walletService.findByUserId(
-                executor,
-                userId,
-            );
-
-        const balanceAfter =
-            Number(
-                wallet.availableBalance,
-            );
-
-        const balanceBefore =
-            balanceAfter - amount;
-
-        await transactionService.createSystemTransaction(
-            executor,
             {
-                userId,
-
-                walletId:
-                    wallet.id,
+                userId:
+                    order.userId,
 
                 amount:
-                    amount.toFixed(2),
-
-                balanceBefore:
-                    balanceBefore.toFixed(
-                        2,
-                    ),
-
-                balanceAfter:
-                    balanceAfter.toFixed(
-                        2,
+                    Number(
+                        order.totalReward,
                     ),
 
                 type:
                     TransactionType.ORDER_REWARD,
 
-                status:
-                    TransactionStatus.COMPLETED,
-
-                reference:
-                    transactionService.generateReference(),
-
                 description:
                     "Daily task reward.",
+
+                notification: {
+                    title:
+                        "Daily Tasks Completed",
+
+                    message: `You've successfully completed today's daily tasks and earned ₦${order.totalReward}.`,
+
+                    type:
+                        NotificationType.ORDER_REWARD,
+                },
 
                 metadata: {
                     source:
                         "daily_order",
-                },
-            },
-        );
-    }
 
-    // Notify the user after
-    // receiving today's reward.
-    async notifyReward(
-        executor: DbExecutor,
-        userId: string,
-        reward: string,
-    ) {
-
-        await notificationService.notifyUser(
-            executor,
-            {
-                userId,
-
-                title:
-                    "Daily Tasks Completed",
-
-                message: `You've successfully completed today's daily tasks and earned ₦${reward}.`,
-
-                type:
-                    NotificationType.ORDER_REWARD,
-
-                metadata: {
-                    reward,
+                    dailyOrderId:
+                        order.id,
                 },
             },
         );

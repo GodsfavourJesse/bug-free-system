@@ -223,6 +223,48 @@ export class DailyOrderConfigService {
             },
         );
     }
+
+    // Active configuration for a membership.
+    async findByMembershipPlanId(
+        membershipPlanId: string,
+    ) {
+
+        const config =
+            await dailyOrderConfigRepository.findByMembershipPlanId(
+                db,
+                membershipPlanId,
+            );
+
+        return dailyOrderConfigValidation.ensureExists(
+            config,
+        );
+    }
+
+    // Maximum advertisements allowed today.
+    async getDailyLimit(
+        membershipPlanId: string,
+    ) {
+        const config =
+            await this.findByMembershipPlanId(
+                membershipPlanId,
+            );
+
+        return config.tasksPerDay;
+    }
+
+    // Reward paid for one advertisement.
+    async getRewardForMembership(
+        membershipPlanId: string,
+    ) {
+        const config =
+            await this.findByMembershipPlanId(
+                membershipPlanId,
+            );
+
+        return Number(
+            config.rewardPerTask,
+        );
+    }
 }
 
 export const dailyOrderConfigService =
