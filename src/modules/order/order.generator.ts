@@ -1,33 +1,43 @@
-import { CreateDailyOrderDto, CreateOrderItemDto } from "./order.dto";
+import {
+    CreateDailyOrderDto,
+    CreateOrderItemDto,
+} from "./order.dto";
+
 import { orderRepository } from "./order.repository";
+
 import { membershipPlanService } from "../membership-plan/membershipPlan.service";
 import { dailyOrderConfigRepository } from "../admin/daily-order-config/dailyOrderConfig.repository";
 import { userRepository } from "../user/user.repository";
+
+import { advertisementRepository } from "../admin/advertisement/advertisement.repository";
+import { completedAdvertisementRepository } from "../completed-advertisement/completedAdvertisement.repository";
+
 import { DbExecutor } from "../../database/types/types";
 
 export class OrderGenerator {
 
-    /**
-     * Generates today's daily tasks for one user.
-     *
-     * Responsibilities:
-     * - determine membership
-     * - determine configuration
-     * - calculate rewards
-     * - create daily order
-     * - generate task items
-     */
+    // Generates today's daily tasks.
+    // Rules:
+    // - User receives ACTIVE advertisements only.
+    // - Previously completed advertisements are excluded.
+    // - If fewer advertisements are available than configured, generate only the remaining ones.
+    // - If none remain, create an empty order instead of throwing.
     async generate(
         executor: DbExecutor,
         userId: string,
     ) {
 
         // Find user
-        const user =
-            await userRepository.findById(
-                executor,
-                userId,
+        const user = await userRepository.findById(
+            executor,
+            userId,
+        );
+
+        if (!user) {
+            throw new Error(
+                "User not found.",
             );
+        }
 
         if (!user.membershipPlanId) {
             throw new Error(
@@ -36,17 +46,15 @@ export class OrderGenerator {
         }
 
         // Membership
-        const membership =
-            await membershipPlanService.getPlan(
-                user.membershipPlanId,
-            );
+        const membership = await membershipPlanService.getPlan(
+            user.membershipPlanId,
+        );
 
-        // Configuration
-        const config =
-            await dailyOrderConfigRepository.findByMembershipPlanId(
-                executor,
-                membership.id,
-            );
+        // Daily configuration
+        const config = await dailyOrderConfigRepository.findByMembershipPlanId(
+            executor,
+            membership.id,
+        );
 
         if (!config) {
             throw new Error(
@@ -60,89 +68,105 @@ export class OrderGenerator {
                 .toISOString()
                 .split("T")[0];
 
-        // Prevent duplicates
-        const existing =
-            await orderRepository.findTodayOrder(
-                executor,
-                userId,
-                today,
-            );
+        // Prevent duplicate generation.
+        const existing = await orderRepository.findTodayOrder(
+            executor,
+            userId,
+            today,
+        );
 
         if (existing) {
             return {
                 order: existing,
-                items:
-                    await orderRepository.findItems(
-                        executor,
-                        existing.id,
-                    ),
+                items: await orderRepository.findItems(
+                    executor,
+                    existing.id,
+                ),
             };
         }
 
-        // Calculate totals
-        const totalReward =
+        // Previously completed advertisements.
+        const completedAdvertisementIds = await completedAdvertisementRepository.findCompletedAdvertisementIds(
+            executor,
+            userId,
+        );
+
+        // Generate a deterministic random seed.
+        // Same user gets the same advertisements for one day.
+        // Different users receive different ads.
+        const randomSeed = `${userId}-${today}`;
+
+        const advertisements = await advertisementRepository.findActiveExcluding(
+            executor,
+            completedAdvertisementIds,
+            config.tasksPerDay,
+            randomSeed,
+        );
+        
+
+        console.log({
+            requestedTasks: config.tasksPerDay,
+            availableAdvertisements: advertisements.length,
+            completedAdvertisementIds,
+            advertisementIds: advertisements.map(
+                (a) => a.id,
+            ),
+        });
+
+        // Generate only as many tasks as are actually available.
+        const taskCount = advertisements.length;
+
+        // Calculate reward.
+        const totalReward = (
+            Number(config.rewardPerTask) *
+            taskCount
+        ).toFixed(2);
+
+        // Create today's order.
+        const orderDto: CreateDailyOrderDto = {
+            userId,
+            membershipPlanId: membership.id,
+            configId: config.id,
+            date: today,
+            requiredTasks: taskCount,
+            totalReward,
+        };
+
+        const order = await orderRepository.createDailyOrder(
+            executor,
+            orderDto,
+        );
+
+        // No advertisements remaining.
+        // Return an empty order instead of throwing an exception.
+        if (taskCount === 0) {
+            return {
+                order,
+                items: [],
+            };
+        }
+
+        // Create order items.
+        const items: CreateOrderItemDto[] = advertisements.map(
             (
-                Number(
-                    config.rewardPerTask,
-                ) *
-                config.tasksPerDay
-            ).toFixed(2);
+                advertisement,
+                index,
+            ) => ({
+                dailyOrderId: order.id,
+                sequence: index + 1,
+                reward: config.rewardPerTask,
+                advertisementId: advertisement.id,
+            }),
+        );
 
-        // Create parent order
-        const orderDto: CreateDailyOrderDto =
-            {
-                userId,
+        const createdItems = await orderRepository.createOrderItems(
+            executor,
+            items,
+        );
 
-                membershipPlanId:
-                    membership.id,
-
-                configId:
-                    config.id,
-
-                date: today,
-
-                requiredTasks:
-                    config.tasksPerDay,
-
-                totalReward,
-            };
-
-        const order =
-            await orderRepository.createDailyOrder(
-                executor,
-                orderDto,
-            );
-
-        // Generate task items
-        const items: CreateOrderItemDto[] =
-            [];
-
-        for (
-            let sequence = 1;
-            sequence <=
-            config.tasksPerDay;
-            sequence++
-        ) {
-
-            items.push({
-                dailyOrderId:
-                    order.id,
-
-                sequence,
-
-                reward:
-                    config.rewardPerTask,
-
-                advertisementId:
-                    null,
-            });
-        }
-
-        const createdItems =
-            await orderRepository.createOrderItems(
-                executor,
-                items,
-            );
+        console.log("Items to insert:");
+        console.dir(items, { depth: null });
+            
 
         return {
             order,
@@ -151,5 +175,4 @@ export class OrderGenerator {
     }
 }
 
-export const orderGenerator =
-    new OrderGenerator();
+export const orderGenerator = new OrderGenerator();

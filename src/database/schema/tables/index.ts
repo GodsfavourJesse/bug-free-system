@@ -11,3 +11,4 @@ export * from "./dailyOrderItems";
 export * from "./withdrawals";
 export * from "./advertisements";
 export * from "./completedAdvertisement";
+export * from "./deposits";

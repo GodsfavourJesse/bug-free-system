@@ -10,7 +10,7 @@ import referralRoutes from "../modules/referral/referral.routes";
 import orderRoutes from "../modules/order/order.routes";
 import withdrawalRoutes from "../modules/withdrawal/withdrawal.routes";
 import completedAdvertisementRoutes from "../modules/completed-advertisement/completedAdvertisement.routes";
-import productRoutes from "../modules/product/product.routes";
+import depositRoutes from "../modules/deposit/deposit.routes";
 
 import adminDashboardRoutes from "../modules/admin/dashboard/dashboard.routes";
 import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
@@ -19,6 +19,7 @@ import adminUserProfileRoutes from "../modules/admin/user-profile/admin-user-pro
 import adminWithdrawalRoutes from "../modules/admin/withdrawal/adminWithdrawal.routes";
 import adminDailyOrderConfigRoutes from "../modules/admin/daily-order-config/dailyOrderConfig.routes"
 import adminAdvertisementRoutes from "../modules/admin/advertisement/advertisement.routes";
+import adminDepositRoutes from "../modules/admin/admin-deposit/adminDeposit.routes";
 
 const router = Router();
 
@@ -79,8 +80,8 @@ router.use(
 );
 
 router.use(
-    "/products",
-    productRoutes,
+    "/deposits",
+    depositRoutes,
 );
 
 
@@ -119,6 +120,11 @@ router.use(
 router.use(
     "/admin/advertisements",
     adminAdvertisementRoutes,
+);
+
+router.use(
+    "/admin/deposits",
+    adminDepositRoutes,
 );
 
 export default router;

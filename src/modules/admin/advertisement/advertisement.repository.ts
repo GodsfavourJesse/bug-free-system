@@ -232,11 +232,7 @@ export class AdvertisementRepository {
         advertisementId: string,
     ) {
         const [advertisement] = await executor
-            .update(advertisements)
-            .set({
-                status:
-                    AdvertisementStatus.INACTIVE,
-            })
+            .delete(advertisements)
             .where(
                 eq(
                     advertisements.id,
@@ -291,12 +287,9 @@ export class AdvertisementRepository {
     async findActiveExcluding(
         executor: DbExecutor = db,
         excludedIds: string[],
+        taskCount: number,
+        seed: string,
     ) {
-
-        if (excludedIds.length === 0) {
-            return this.findActive(executor);
-        }
-
         return executor
             .select()
             .from(advertisements)
@@ -306,15 +299,23 @@ export class AdvertisementRepository {
                         advertisements.status,
                         AdvertisementStatus.ACTIVE,
                     ),
-                    not(
-                        inArray(
-                            advertisements.id,
-                            excludedIds,
-                        ),
-                    ),
+                    ...(excludedIds.length
+                        ? [
+                            not(
+                                inArray(
+                                    advertisements.id,
+                                    excludedIds,
+                                ),
+                            ),
+                        ]
+                        : []),
                 ),
-            );
-
+            )
+            // Randomize advertisements every generation
+            .orderBy(
+                sql`md5(${advertisements.id} || ${seed})`,
+            )
+            .limit(taskCount);
     }
     
 

@@ -1,30 +1,37 @@
 import { Request, Response } from "express";
+
 import { orderService } from "./order.service";
 
 export class OrderController {
 
-    // Get today's daily tasks.
+    // Get today's order together with its tasks.
     async getTodayOrder(
-        req: Request,
-        res: Response,
-    ) {
-        const order =
-            await orderService.getTodayOrder(
-                req.user!.id,
-            );
+        req:Request,
+        res:Response,
+    ){
+        const userId = req.user?.id;
 
-        return res.status(200).json({
-            success: true,
-            data: order,
+        if(!userId){
+            throw new Error(
+                "Unauthorized"
+            );
+        }
+
+        const order = await orderService.getTodayOrder(
+            userId,
+        );
+
+        res.status(200).json({
+            success:true,
+            data:order,
         });
     }
 
-    // Get one daily task group.
+    // Get one daily order.
     async getOrder(
         req: Request,
         res: Response,
     ) {
-
         const orderId = Array.isArray(req.params.id)
             ? req.params.id[0]
             : req.params.id;
@@ -40,20 +47,14 @@ export class OrderController {
         });
     }
 
-    // Get all tasks belonging
-    // to one daily task group.
-    async getOrderItems(
+    // Get today's tasks only.
+    async getTodayOrderItems(
         req: Request,
         res: Response,
     ) {
-
-        const orderId = Array.isArray(req.params.id)
-            ? req.params.id[0]
-            : req.params.id;
-
         const items =
             await orderService.getOrderItems(
-                orderId,
+                req.user!.id,
             );
 
         return res.status(200).json({
@@ -67,21 +68,40 @@ export class OrderController {
         req: Request,
         res: Response,
     ) {
-
         const itemId = Array.isArray(req.params.itemId)
             ? req.params.itemId[0]
             : req.params.itemId;
 
-        const result = await orderService.completeOrderItem({
-            userId: req.user!.id,
-            itemId,
-        });
+        const result =
+            await orderService.completeOrderItem({
+                userId: req.user!.id,
+                itemId,
+            });
 
         return res.status(200).json({
             success: true,
-            message:
-                "Task completed successfully.",
+            message: "Task completed successfully.",
             data: result,
+        });
+    }
+
+    // Get one task.
+    async getOrderItem(
+        req: Request,
+        res: Response,
+    ) {
+        const itemId = Array.isArray(req.params.itemId)
+            ? req.params.itemId[0]
+            : req.params.itemId;
+
+        const item =
+            await orderService.getOrderItem(
+                itemId,
+            );
+
+        return res.status(200).json({
+            success: true,
+            data: item,
         });
     }
 }

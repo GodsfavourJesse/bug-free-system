@@ -145,48 +145,26 @@ export class CompletedAdvertisementRepository {
         return Number(count);
     }
 
-    async findCompletedAdvertisementIdsToday(
+    /**
+     * Return every advertisement ID the user
+     * has ever completed.
+     */
+    async findCompletedAdvertisementIds(
         executor: DbExecutor = db,
         userId: string,
     ) {
-        const startOfToday = new Date();
-
-        startOfToday.setHours(
-            0,
-            0,
-            0,
-            0,
-        );
-
-        const startOfTomorrow = new Date(startOfToday);
-
-        startOfTomorrow.setDate(
-            startOfTomorrow.getDate() + 1,
-        );
-
-        const rows =
-            await executor
-                .select({
-                    advertisementId:
-                        completedAdvertisements.advertisementId,
-                })
-                .from(completedAdvertisements)
-                .where(
-                    and(
-                        eq(
-                            completedAdvertisements.userId,
-                            userId,
-                        ),
-                        gte(
-                            completedAdvertisements.completedAt,
-                            startOfToday,
-                        ),
-                        lt(
-                            completedAdvertisements.completedAt,
-                            startOfTomorrow,
-                        ),
-                    ),
-                );
+        const rows = await executor
+            .select({
+                advertisementId:
+                    completedAdvertisements.advertisementId,
+            })
+            .from(completedAdvertisements)
+            .where(
+                eq(
+                    completedAdvertisements.userId,
+                    userId,
+                ),
+            );
 
         return rows.map(
             row => row.advertisementId,

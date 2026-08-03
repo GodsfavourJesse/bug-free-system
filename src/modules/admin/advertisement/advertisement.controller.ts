@@ -110,10 +110,11 @@ export class AdvertisementController {
 
             res.status(200).json({
                 success: true,
-                message: "Advertisement archived successfully.",
+                message: "Advertisement deleted successfully.",
                 data: advertisement,
             });
         } catch (error) {
+            console.error(error);
             next(error);
         }
     }
@@ -184,27 +185,6 @@ export class AdvertisementController {
         }
     }
 
-    // Archive advertisement.
-    async archiveAdvertisement(
-        req: Request<AdvertisementParams>,
-        res: Response,
-        next: NextFunction,
-    ) {
-        try {
-            const advertisement =
-                await advertisementService.deactivate(
-                    req.params.id,
-                );
-
-            res.status(200).json({
-                success: true,
-                message: "Advertisement archived successfully.",
-                data: advertisement,
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
 
 }
 

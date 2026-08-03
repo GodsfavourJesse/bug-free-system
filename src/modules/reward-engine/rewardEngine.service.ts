@@ -32,22 +32,7 @@ export class RewardEngineService {
         return withTransaction(
             async (tx) => {
 
-                /**
-                 * 1.
-                 * Record completion.
-                 */
-                await completedAdvertisementService.complete({
-                    userId:
-                        dto.userId,
-
-                    advertisementId:
-                        dto.advertisementId,
-                });
-
-                /**
-                 * 2.
-                 * Resolve membership.
-                 */
+                // Resolve membership.
                 const membership =
                     await membershipPlanService.getCurrentPlan(
                         dto.userId,
@@ -65,6 +50,7 @@ export class RewardEngineService {
 
                 const completedToday =
                     await completedAdvertisementService.countCompletedToday(
+                        tx,
                         dto.userId,
                     );
 
@@ -73,10 +59,7 @@ export class RewardEngineService {
                     dailyLimit,
                 );
 
-                /**
-                 * 4.
-                 * Credit reward.
-                 */
+                // Credit reward.
                 const reward =
                     await this.creditReward(
                         tx,

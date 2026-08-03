@@ -13,22 +13,28 @@ router.get(
     orderController.getTodayOrder,
 );
 
-// Get one daily task group.
+// Today's order items
 router.get(
-    "/:id",
-    orderController.getOrder,
+    "/today/items",
+    orderController.getTodayOrderItems,
 );
 
-// Get every task in a daily task group.
+// Single task
 router.get(
-    "/:id/items",
-    orderController.getOrderItems,
+    "/items/:itemId",
+    orderController.getOrderItem,
 );
 
 // Complete one task.
 router.post(
     "/items/:itemId/complete",
     orderController.completeOrderItem,
+);
+
+// Optional ( Get one daily task group.)
+router.get(
+    "/:id",
+    orderController.getOrder,
 );
 
 export default router;

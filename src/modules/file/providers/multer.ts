@@ -4,10 +4,12 @@ import fs from "fs";
 import { FileValidation } from "../file.validation";
 
 // Ensure uploads directory exists.
-const uploadDir = "uploads";
+const uploadDir = path.resolve("uploads");
 
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, {
+        recursive: true,
+    });
 }
 
 // Store uploaded files temporarily on disk.

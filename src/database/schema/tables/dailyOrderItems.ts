@@ -37,7 +37,10 @@ export const dailyOrderItems =
 
             // Advertisement assigned to this task.
             advertisementId: uuid("advertisement_id")
-                .references(() => advertisements.id),
+                .references(() => advertisements.id, {
+                    onDelete: "restrict",
+                })
+                .notNull(),
 
             reward: numeric(
                 "reward",

@@ -33,3 +33,20 @@ export class DailyOrderAlreadyCompletedError extends Error {
         super("Daily order has already been completed or expired.");
     }
 }
+
+export class InsufficientAdvertisementsError 
+extends Error {
+
+    constructor(
+        available:number,
+        required:number,
+    ){
+
+        super(
+            `Only ${available} advertisements available. ${required} required.`,
+        );
+
+        this.name =
+            "InsufficientAdvertisementsError";
+    }
+}

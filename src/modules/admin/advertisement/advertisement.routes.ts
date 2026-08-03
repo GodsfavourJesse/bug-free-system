@@ -78,19 +78,8 @@ router.patch(
 );
 
 /**
- * PATCH /admin/advertisements/:id/archive
- * Archive an advertisement.
- */
-router.patch(
-    "/:id/archive",
-    advertisementController.archiveAdvertisement.bind(
-        advertisementController,
-    ),
-);
-
-/**
  * DELETE /admin/advertisements/:id
- * Archive (soft delete) an advertisement.
+ * Permanently delete advertisement.
  */
 router.delete(
     "/:id",

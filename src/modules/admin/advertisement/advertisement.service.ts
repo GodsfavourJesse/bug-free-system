@@ -121,23 +121,19 @@ export class AdvertisementService {
     async delete(
         advertisementId: string,
     ) {
-        // Find advertisement.
         const advertisement =
             await this.repository.findById(
                 db,
                 advertisementId,
             );
 
-        // Ensure it exists.
         this.validation.ensureExists(
             advertisement,
         );
 
-        // Soft delete by marking it inactive.
-        return this.repository.updateStatus(
+        return this.repository.delete(
             db,
             advertisementId,
-            AdvertisementStatus.INACTIVE,
         );
     }
 

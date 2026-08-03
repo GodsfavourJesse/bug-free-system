@@ -18,6 +18,8 @@ import {
 } from "../../database/enums/notification.enum";
 
 import { rewardEngineService } from "../reward-engine/rewardEngine.service";
+import { completedAdvertisementService } from "../completed-advertisement/completedAdvertisement.service";
+import { TodayOrderState } from "../../database/enums/today-order.enum";
 
 export class OrderService {
 
@@ -42,18 +44,16 @@ export class OrderService {
     ) {
         return withTransaction(
             async (tx) => {
-
                 const today =
                     new Date()
                         .toISOString()
                         .split("T")[0];
 
-                const existingOrder =
-                    await orderRepository.findTodayOrder(
-                        tx,
-                        dto.userId,
-                        today,
-                    );
+                const existingOrder = await orderRepository.findTodayOrderWithItems(
+                    tx,
+                    dto.userId,
+                    today,
+                );
 
                 if (existingOrder) {
                     return existingOrder;
@@ -76,17 +76,50 @@ export class OrderService {
                 .toISOString()
                 .split("T")[0];
 
-        const order =
-            await orderRepository.findTodayOrder(
+        // Fetch today's order together with ALL tasks, not only pending tasks.
+        let order = await orderRepository.findTodayOrderWithItems(
+            db,
+            userId,
+            today,
+        );
+
+        // Generate today's order if one doesn't exist.
+        if (!order) {
+            await this.generateDailyOrders({
+                userId,
+            });
+
+            order = await orderRepository.findTodayOrderWithItems(
                 db,
                 userId,
                 today,
             );
+        }
 
-        return orderValidation.ensureOrderExists(
+        order = orderValidation.ensureOrderExists(
             order,
         );
+
+        // Determine today's state.
+        let state: TodayOrderState;
+
+        if (order.requiredTasks === 0) {
+            state = TodayOrderState.NO_TASKS;
+        } else if (
+            order.completedTasks >=
+            order.requiredTasks
+        ) {
+            state = TodayOrderState.COMPLETED;
+        } else {
+            state = TodayOrderState.AVAILABLE;
+        }
+
+        return {
+            ...order,
+            state,
+        };
     }
+
 
     // Get every task belonging to today's order.
     async getOrderItems(
@@ -97,10 +130,7 @@ export class OrderService {
                 userId,
             );
 
-        return orderRepository.findItems(
-            db,
-            order.id,
-        );
+        return order.items;
     }
 
     // Complete one task.
@@ -145,10 +175,56 @@ export class OrderService {
                     order,
                 );
 
-                // Complete task.
+                /**
+                 * Complete the task.
+                 */
                 await orderRepository.completeItem(
                     tx,
                     item.id,
+                );
+
+                /**
+                 * Permanently record that this user
+                 * has completed this advertisement.
+                 *
+                 * This prevents the advertisement from
+                 * ever being generated again for this user.
+                 */
+                if (!item.advertisementId) {
+                    throw new Error(
+                        "Task has no advertisement attached.",
+                    );
+                }
+
+                await completedAdvertisementService.complete(
+                    tx,
+                    {
+                        userId,
+                        advertisementId: item.advertisementId,
+                    },
+                );
+
+                await rewardEngineService.creditReward(
+                    tx,
+                    {
+                        userId,
+                        amount: Number(item.reward),
+                        type: TransactionType.ORDER_REWARD,
+                        description: "Daily task reward.",
+
+                        notification: {
+                            title: "Task Completed",
+                            message: `You've earned ₦${item.reward} for completing a task.`,
+                            type: NotificationType.ORDER_REWARD,
+                        },
+
+                        metadata: {
+                            source: "daily_order",
+                            dailyOrderId: order.id,
+                            dailyOrderItemId: item.id,
+                            advertisementId: item.advertisementId,
+                        },
+                    },
                 );
 
                 const completedTasks =
@@ -160,7 +236,9 @@ export class OrderService {
                         ? DailyOrderStatus.COMPLETED
                         : DailyOrderStatus.IN_PROGRESS;
 
-                // Update progress.
+                /**
+                 * Update order progress.
+                 */
                 await orderRepository.updateOrderProgress(
                     tx,
                     order.id,
@@ -168,7 +246,10 @@ export class OrderService {
                     status,
                 );
 
-                // Finish daily order when all tasks are done.
+                /**
+                 * Finish the daily order when every
+                 * task has been completed.
+                 */
                 if (
                     completedTasks >=
                     order.requiredTasks
@@ -198,11 +279,10 @@ export class OrderService {
         orderId: string,
     ) {
 
-        const order =
-            await orderRepository.findOrderById(
-                tx,
-                orderId,
-            );
+        const order = await orderRepository.findOrderById(
+            tx,
+            orderId,
+        );
 
         orderValidation.ensureOrderExists(
             order,
@@ -213,45 +293,6 @@ export class OrderService {
             tx,
             order.id,
             order.totalReward,
-        );
-
-        // Delegate all reward processing
-        // to the Reward Engine.
-        await rewardEngineService.creditReward(
-            tx,
-            {
-                userId:
-                    order.userId,
-
-                amount:
-                    Number(
-                        order.totalReward,
-                    ),
-
-                type:
-                    TransactionType.ORDER_REWARD,
-
-                description:
-                    "Daily task reward.",
-
-                notification: {
-                    title:
-                        "Daily Tasks Completed",
-
-                    message: `You've successfully completed today's daily tasks and earned ₦${order.totalReward}.`,
-
-                    type:
-                        NotificationType.ORDER_REWARD,
-                },
-
-                metadata: {
-                    source:
-                        "daily_order",
-
-                    dailyOrderId:
-                        order.id,
-                },
-            },
         );
     }
 
@@ -274,7 +315,20 @@ export class OrderService {
             },
         );
     }
+
+    // Get one order item.
+    async getOrderItem(
+        itemId: string,
+    ) {
+        const item = await orderRepository.findItemById(
+            db,
+            itemId,
+        );
+
+        return orderValidation.ensureItemExists(
+            item,
+        );
+    }    
 }
 
-export const orderService =
-    new OrderService();
+export const orderService = new OrderService();

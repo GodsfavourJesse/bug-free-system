@@ -6,6 +6,9 @@ export enum NotificationType {
     // Membership upgrade notifications.
     UPGRADE = "upgrade",
 
+    // Deposit notifications.
+    DEPOSIT = "deposit",
+
     // Withdrawal notifications.
     WITHDRAWAL = "withdrawal",
 
