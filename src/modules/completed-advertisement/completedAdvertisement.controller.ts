@@ -19,12 +19,13 @@ export class CompletedAdvertisementController {
         next: NextFunction,
     ) => {
         try {
-            const completion =
-                await completedAdvertisementService.complete({
+            const completion =await completedAdvertisementService.complete(
+                undefined,
+                {
                     userId: req.user!.id,
-                    advertisementId:
-                        req.body.advertisementId,
-                });
+                    advertisementId: req.body.advertisementId,
+                },
+            );
 
             res.status(201).json({
                 success: true,
@@ -49,10 +50,10 @@ export class CompletedAdvertisementController {
         next: NextFunction,
     ) => {
         try {
-            const completed =
-                await completedAdvertisementService.getUserCompleted(
-                    req.user!.id,
-                );
+            const completed = await completedAdvertisementService.getUserCompleted(
+                undefined,
+                req.user!.id,
+            );
 
             res.status(200).json({
                 success: true,
@@ -82,11 +83,11 @@ export class CompletedAdvertisementController {
                 ? req.params.advertisementId[0]
                 : req.params.advertisementId;
 
-            const completed =
-                await completedAdvertisementService.hasCompleted(
-                    req.user!.id,
-                    advertisementId,
-                );
+            const completed = await completedAdvertisementService.hasCompleted(
+                undefined,
+                req.user!.id,
+                advertisementId,
+            );
 
             res.status(200).json({
                 success: true,
@@ -115,10 +116,10 @@ export class CompletedAdvertisementController {
                 ? req.params.advertisementId[0]
                 : req.params.advertisementId;
 
-            const count =
-                await completedAdvertisementService.countCompleted(
-                    advertisementId
-                );
+            const count =await completedAdvertisementService.countCompleted(
+                undefined,
+                advertisementId,
+            );
 
             res.status(200).json({
                 success: true,
