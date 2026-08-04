@@ -210,12 +210,14 @@ export class OrderRepository {
         executor: DbExecutor,
         orderId: string,
         completedTasks: number,
+        rewardEarned: string,
         status: DailyOrderStatus,
     ) {
         const [order] = await executor
             .update(dailyOrders)
             .set({
                 completedTasks,
+                rewardEarned,
                 status,
             })
             .where(

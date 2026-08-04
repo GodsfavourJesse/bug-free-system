@@ -77,7 +77,7 @@ export class OrderService {
                 .split("T")[0];
 
         // Fetch today's order together with ALL tasks, not only pending tasks.
-        let order = await orderRepository.findTodayOrderWithItems(
+        let order = await orderRepository.findTodayOrderWithPendingItems(
             db,
             userId,
             today,
@@ -89,7 +89,7 @@ export class OrderService {
                 userId,
             });
 
-            order = await orderRepository.findTodayOrderWithItems(
+            order = await orderRepository.findTodayOrderWithPendingItems(
                 db,
                 userId,
                 today,
@@ -236,6 +236,10 @@ export class OrderService {
                         ? DailyOrderStatus.COMPLETED
                         : DailyOrderStatus.IN_PROGRESS;
 
+                const rewardEarned = (
+                    Number(order.rewardEarned) + Number(item.reward)
+                ).toFixed(2);
+
                 /**
                  * Update order progress.
                  */
@@ -243,6 +247,7 @@ export class OrderService {
                     tx,
                     order.id,
                     completedTasks,
+                    rewardEarned,
                     status,
                 );
 
