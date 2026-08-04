@@ -21,6 +21,8 @@ import {
 } from "../../../database/enums/transaction.enum";
 
 import { NotificationType } from "../../../database/enums/notification.enum";
+import { adminWalletService } from "../admin-wallet/adminWallet.service";
+import { adminWalletTransactionRepository } from "../admin-wallet/admin-wallet-transaction/adminWalletTransaction.repository";
 
 export class AdminDepositService {
 
@@ -63,11 +65,87 @@ export class AdminDepositService {
         );
     }
 
-    /**
-     * ----------------------------------------
-     * Approve deposit
-     * ----------------------------------------
-     */
+    // Approve deposit
+    // async approveDeposit(
+    //     adminId: string,
+    //     depositId: string,
+    //     dto: ApproveDepositDto,
+    // ) {
+    //     return withTransaction(
+    //         async (tx) => {
+
+    //             const entity =
+    //                 await this.findExistingDeposit(
+    //                     tx,
+    //                     depositId,
+    //                 );
+
+    //             const {
+    //                 deposit,
+    //             } = entity;
+
+    //             depositValidation.ensurePending(
+    //                 deposit,
+    //             );
+
+    //             const wallet =
+    //                 await walletService.findByUserId(
+    //                     tx,
+    //                     deposit.userId,
+    //                 );
+
+    //             const amount =
+    //                 Number(
+    //                     deposit.amount,
+    //                 );
+
+    //             const balanceBefore =
+    //                 Number(
+    //                     wallet.availableBalance,
+    //                 );
+
+    //             await adminDepositRepository.approve(
+    //                 tx,
+    //                 deposit.id,
+    //                 adminId,
+    //                 dto.adminRemark,
+    //             );
+
+    //             await walletService.creditBalance(
+    //                 tx,
+    //                 deposit.userId,
+    //                 amount,
+    //             );
+
+    //             await walletService.increaseDeposited(
+    //                 tx,
+    //                 deposit.userId,
+    //                 amount,
+    //             );
+
+    //             await this.createDepositTransaction(
+    //                 tx,
+    //                 deposit,
+    //                 wallet.id,
+    //                 balanceBefore,
+    //                 amount,
+    //             );
+
+    //             await this.notifyDepositApproved(
+    //                 tx,
+    //                 deposit,
+    //                 amount,
+    //             );
+
+    //             return this.findExistingDeposit(
+    //                 tx,
+    //                 deposit.id,
+    //             );
+
+    //         },
+    //     );
+    // }
+
     async approveDeposit(
         adminId: string,
         depositId: string,
@@ -76,36 +154,72 @@ export class AdminDepositService {
         return withTransaction(
             async (tx) => {
 
-                const entity =
-                    await this.findExistingDeposit(
-                        tx,
-                        depositId,
-                    );
+                // 1. Find deposit
+                const entity = await this.findExistingDeposit(
+                    tx,
+                    depositId,
+                );
 
-                const {
-                    deposit,
-                } = entity;
+                const { deposit } = entity;
 
+                // 2. Ensure deposit is pending.
                 depositValidation.ensurePending(
                     deposit,
                 );
 
-                const wallet =
-                    await walletService.findByUserId(
-                        tx,
-                        deposit.userId,
-                    );
+                const amount = Number(
+                    deposit.amount,
+                );
 
-                const amount =
-                    Number(
-                        deposit.amount,
-                    );
+                // 3. Get user wallet
+                const userWallet = await walletService.lockByUserId(
+                    tx,
+                    deposit.userId,
+                );
 
-                const balanceBefore =
-                    Number(
-                        wallet.availableBalance,
-                    );
+                const userBalanceBefore = Number(
+                    userWallet.availableBalance,
+                );
 
+                // 4. Debit admin wallet.
+                const adminDebit = await adminWalletService.debit(
+                    tx,
+                    amount,
+                );
+
+                await adminWalletTransactionRepository.create(
+                    tx,
+                    {
+                        adminId: adminDebit.userId,
+                        type: TransactionType.DEPOSIT_DEBIT,
+                        amount: amount.toFixed(2),
+                        balanceBefore: adminDebit.balanceBefore.toFixed(2),
+                        balanceAfter: adminDebit.balanceAfter.toFixed(2),
+                        description: `Deposit approved for ${deposit.reference}`,
+                        
+                        metadata: {
+                            depositId: deposit.id,
+                            reference: deposit.reference,
+                            userId: deposit.userId,
+                        },
+                    },
+                );
+
+                // 5. Credit user wallet.
+                await walletService.creditBalance(
+                    tx,
+                    deposit.userId,
+                    amount,
+                );
+
+                // 6. Increase total deposited amount.
+                await walletService.increaseDeposited(
+                    tx,
+                    deposit.userId,
+                    amount,
+                );
+
+                // 7. Approve deposit request
                 await adminDepositRepository.approve(
                     tx,
                     deposit.id,
@@ -113,40 +227,81 @@ export class AdminDepositService {
                     dto.adminRemark,
                 );
 
-                await walletService.creditBalance(
+                // Create admin wallet transaction.
+                await transactionService.create(
+                    {
+                        userId: adminDebit.userId,
+                        walletId: adminDebit.walletId,
+                        type: TransactionType.DEPOSIT_DEBIT,
+                        amount,
+                        balanceBefore: adminDebit.balanceBefore,
+                        balanceAfter: adminDebit.balanceAfter,
+                        status: TransactionStatus.COMPLETED,
+                        description: `Deposit approval debit for user ${deposit.userId}`,
+
+                        metadata: {
+                            depositId: deposit.id,
+                            depositReference: deposit.reference,
+                            direction: "DEBIT",
+                        },
+                    },
                     tx,
-                    deposit.userId,
-                    amount,
                 );
 
-                await walletService.increaseDeposited(
+                // 9. Create user wallet transaction.
+                 await transactionService.create(
+                    {
+                        userId: deposit.userId,
+                        walletId: userWallet.id,
+                        type: TransactionType.DEPOSIT,
+                        amount,
+                        balanceBefore: userBalanceBefore,
+                        balanceAfter: userBalanceBefore + amount,
+                        status: TransactionStatus.COMPLETED,
+                        description: "Deposit approved and wallet credited.",
+
+                        metadata: {
+                            depositId: deposit.id,
+                            depositReference: deposit.reference,
+                            direction: "CREDIT",
+                        },
+                    },
                     tx,
-                    deposit.userId,
-                    amount,
                 );
 
-                await this.createDepositTransaction(
+                // 10. Notify user
+                await notificationService.notifyUser(
                     tx,
-                    deposit,
-                    wallet.id,
-                    balanceBefore,
-                    amount,
+                    {
+                        userId: deposit.userId,
+                        title: "Deposit Approved",
+
+                        message: `Your deposit of ₦${amount.toLocaleString(
+                            "en-NG",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                            },
+                        )} has been approved and credited to your wallet.`,
+
+                        type: NotificationType.WALLET,
+
+                        metadata: {
+                            depositId: deposit.id,
+                        },
+                    },
                 );
 
-                await this.notifyDepositApproved(
-                    tx,
-                    deposit,
-                    amount,
-                );
-
+                // Return updated deposit.
                 return this.findExistingDeposit(
                     tx,
                     deposit.id,
                 );
 
-            },
-        );
+            }
+        )
     }
+
 
     /**
      * ----------------------------------------

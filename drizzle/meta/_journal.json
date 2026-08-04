@@ -99,6 +99,13 @@
       "when": 1785784841550,
       "tag": "0013_famous_harpoon",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785851749350,
+      "tag": "0014_high_chamber",
+      "breakpoints": true
     }
   ]
 }

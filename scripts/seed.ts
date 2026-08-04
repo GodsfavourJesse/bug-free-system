@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { db } from "../src/database";
-import { users, membershipPlans, dailyOrderConfigs } from "../src/database/schema";
+import { users, membershipPlans, dailyOrderConfigs, wallets } from "../src/database/schema";
 import { hashPassword } from "../src/utils/hash";
 
 async function seedMembershipPlans() {
@@ -215,7 +215,31 @@ async function seedAdmin() {
         .limit(1);
 
     if (existingAdmin.length > 0) {
+        const admin = existingAdmin[0];
+
+        const existingWallet = await db
+            .select()
+            .from(wallets)
+            .where(eq(wallets.userId, admin.id))
+            .limit(1);
+
+        if (existingWallet.length === 0) {
+
+            await db.insert(wallets).values({
+                userId: admin.id,
+                availableBalance: "999999999.00",
+                heldBalance: "0.00",
+                totalEarned: "0.00",
+                totalDeposited: "0.00",
+                totalWithdrawn: "0.00",
+            });
+
+            console.log("Admin wallet created successfully.");
+        } else {
+            console.log("Admin wallet already exists.");
+        }
         console.log("Admin already exists.");
+
         return;
     }
 
@@ -245,7 +269,18 @@ async function seedAdmin() {
         })
         .returning();
 
+    // Create admin wallet
+    await db.insert(wallets).values({
+        userId: admin.id,
+        availableBalance: "999999999.00",
+        heldBalance: "0.00",
+        totalEarned: "0.00",
+        totalDeposited: "0.00",
+        totalWithdrawn: "0.00",
+    })
+
     console.log("Admin created successfully.");
+    console.log("Admin wallet created");
     console.log(admin);
 }
 

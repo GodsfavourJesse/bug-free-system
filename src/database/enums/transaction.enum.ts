@@ -1,5 +1,6 @@
 export enum TransactionType {
     DEPOSIT = "deposit",
+    DEPOSIT_DEBIT = "deposit_debit",
     WITHDRAWAL = "withdrawal",
     HOLD = "hold",
     RELEASE = "release",
@@ -12,6 +13,8 @@ export enum TransactionType {
 
     // Daily task reward.
     ORDER_REWARD = "order_reward",
+
+    ADMIN_DEPOSIT_DEBIT = "admin_deposit_debit",
 }
 
 export enum TransactionStatus {

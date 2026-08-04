@@ -12,3 +12,4 @@ export * from "./withdrawals";
 export * from "./advertisements";
 export * from "./completedAdvertisement";
 export * from "./deposits";
+export * from "./admin-wallet-transactions";

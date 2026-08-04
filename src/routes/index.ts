@@ -20,6 +20,7 @@ import adminWithdrawalRoutes from "../modules/admin/withdrawal/adminWithdrawal.r
 import adminDailyOrderConfigRoutes from "../modules/admin/daily-order-config/dailyOrderConfig.routes"
 import adminAdvertisementRoutes from "../modules/admin/advertisement/advertisement.routes";
 import adminDepositRoutes from "../modules/admin/admin-deposit/adminDeposit.routes";
+import adminWalletRoutes from "../modules/admin/admin-wallet/adminWallet.routes";
 
 const router = Router();
 
@@ -90,6 +91,11 @@ router.use(
 router.use(
     "/admin/dashboard",
     adminDashboardRoutes,
+);
+
+router.use(
+    "/admin/wallet",
+    adminWalletRoutes,
 );
 
 router.use(
