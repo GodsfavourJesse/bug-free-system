@@ -236,9 +236,8 @@ export class OrderService {
                         ? DailyOrderStatus.COMPLETED
                         : DailyOrderStatus.IN_PROGRESS;
 
-                const rewardEarned = (
+                const rewardEarned =
                     Number(order.rewardEarned) + Number(item.reward)
-                ).toFixed(2);
 
                 /**
                  * Update order progress.
@@ -247,8 +246,8 @@ export class OrderService {
                     tx,
                     order.id,
                     completedTasks,
-                    rewardEarned,
                     status,
+                    rewardEarned,
                 );
 
                 /**
