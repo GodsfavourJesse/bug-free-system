@@ -9,6 +9,25 @@ import { db } from "../../database";
 
 export class TransactionService {
 
+    private buildPagination(
+        page: number,
+        limit: number,
+        total: number,
+    ) {
+        const totalPages = Math.ceil(
+            total / limit,
+        );
+
+        return {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
+        };
+    }
+
     // Creates a transaction record.
     async create(
         data: {
@@ -101,24 +120,54 @@ export class TransactionService {
         );
     }
 
-    // Returns every transaction belonging to a user.
+    // Returns paginated transactions belonging to a user.
     async findByUser(
         userId: string,
+        page: number = 1,
+        limit: number = 20,
     ) {
-        return transactionRepository.findByUser(
-            db,
-            userId,
-        );
+        const result =
+            await transactionRepository.findByUser(
+                db,
+                userId,
+                page,
+                limit,
+            );
+
+        return {
+            data: result.data,
+
+            pagination: this.buildPagination(
+                page,
+                limit,
+                result.total,
+            ),
+        };
     }
 
-    // Returns every transaction belonging to a wallet.
+    // Returns paginated transactions belonging to a wallet.
     async findByWallet(
         walletId: string,
+        page: number = 1,
+        limit: number = 20,
     ) {
-        return transactionRepository.findByWallet(
-            db,
-            walletId,
-        );
+        const result =
+            await transactionRepository.findByWallet(
+                db,
+                walletId,
+                page,
+                limit,
+            );
+
+        return {
+            data: result.data,
+
+            pagination: this.buildPagination(
+                page,
+                limit,
+                result.total,
+            ),
+        };
     }
 
     // Updates the transaction status.

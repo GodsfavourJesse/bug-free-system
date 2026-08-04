@@ -37,3 +37,8 @@ export interface CreateSystemTransactionDto {
 
     metadata?: CommissionTransactionMetadata | Record<string, unknown>;
 }
+
+export interface PaginationDto {
+    page?: number;
+    limit?: number;
+}

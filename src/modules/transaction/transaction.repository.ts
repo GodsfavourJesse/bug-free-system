@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { DbExecutor } from "../../database/types/types";
 import { db } from "../../database";
 import { transactions } from "../../database/schema";
@@ -52,13 +52,17 @@ export class TransactionRepository {
         return result[0] ?? null;
     }
 
-    // Returns every transaction belonging to a user.
+    // Returns paginated transactions belonging to a user.
     // Newest transactions come first.
     async findByUser(
         executor: DbExecutor = db,
         userId: string,
+        page: number = 1,
+        limit: number = 20,
     ) {
-        return executor
+        const offset = (page - 1) * limit;
+
+        const data = await executor
             .select()
             .from(transactions)
             .where(
@@ -71,16 +75,39 @@ export class TransactionRepository {
                 desc(
                     transactions.createdAt,
                 ),
+            )
+            .limit(limit)
+            .offset(offset);
+
+        const [{ total }] = await executor
+            .select({
+                total: count(),
+            })
+            .from(transactions)
+            .where(
+                eq(
+                    transactions.userId,
+                    userId,
+                ),
             );
+
+        return {
+            data,
+            total,
+        };
     }
 
-    // Returns every transaction belonging to a wallet.
+    // Returns paginated transactions belonging to a wallet.
     // Newest transactions come first.
     async findByWallet(
         executor: DbExecutor = db,
         walletId: string,
+        page: number = 1,
+        limit: number = 20,
     ) {
-        return executor
+        const offset = (page - 1) * limit;
+
+        const data = await executor
             .select()
             .from(transactions)
             .where(
@@ -93,7 +120,28 @@ export class TransactionRepository {
                 desc(
                     transactions.createdAt,
                 ),
+            )
+            .limit(limit)
+            .offset(offset);
+
+
+        const [{ total }] = await executor
+            .select({
+                total: count(),
+            })
+            .from(transactions)
+            .where(
+                eq(
+                    transactions.walletId,
+                    walletId,
+                ),
             );
+
+
+        return {
+            data,
+            total,
+        };
     }
 
     // Updates the status of a transaction.
