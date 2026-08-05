@@ -1,47 +1,29 @@
 import { Router } from "express";
 
-import { withdrawalController } from "./withdrawal.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
-import { authorize } from "../../middlewares/role.middleware";
+import { withdrawalController } from "./withdrawal.controller";
 
 const router = Router();
 
 // All withdrawal routes require authentication.
 router.use(authenticate);
 
-// User routes.
+// Create a withdrawal request.
 router.post(
     "/",
     withdrawalController.createWithdrawal,
 );
 
+// Get the logged-in user's withdrawals.
 router.get(
     "/",
     withdrawalController.getUserWithdrawals,
 );
 
+// Get one of the logged-in user's withdrawals.
 router.get(
     "/:id",
     withdrawalController.getWithdrawal,
-);
-
-// Admin routes.
-router.patch(
-    "/admin/:id/approve",
-    authorize("admin"),
-    withdrawalController.approveWithdrawal,
-);
-
-router.patch(
-    "/admin/:id/reject",
-    authorize("admin"),
-    withdrawalController.rejectWithdrawal,
-);
-
-router.patch(
-    "/admin/:id/paid",
-    authorize("admin"),
-    withdrawalController.markPaid,
 );
 
 export default router;

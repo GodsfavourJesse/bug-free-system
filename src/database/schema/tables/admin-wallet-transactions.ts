@@ -8,7 +8,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
-
 export const adminWalletTransactions =
     pgTable(
         "admin_wallet_transactions",
@@ -17,7 +16,6 @@ export const adminWalletTransactions =
             id: uuid("id")
                 .defaultRandom()
                 .primaryKey(),
-
 
             adminId: uuid("admin_id")
                 .notNull()
@@ -28,7 +26,6 @@ export const adminWalletTransactions =
                     }
                 ),
 
-
             type: varchar(
                 "type",
                 {
@@ -36,7 +33,6 @@ export const adminWalletTransactions =
                 }
             )
             .notNull(),
-
 
             amount: decimal(
                 "amount",
@@ -47,7 +43,6 @@ export const adminWalletTransactions =
             )
             .notNull(),
 
-
             balanceBefore: decimal(
                 "balance_before",
                 {
@@ -56,7 +51,6 @@ export const adminWalletTransactions =
                 }
             )
             .notNull(),
-
 
             balanceAfter: decimal(
                 "balance_after",
@@ -67,7 +61,6 @@ export const adminWalletTransactions =
             )
             .notNull(),
 
-
             description: varchar(
                 "description",
                 {
@@ -76,11 +69,9 @@ export const adminWalletTransactions =
             )
             .notNull(),
 
-
             metadata: jsonb(
                 "metadata"
             ),
-
 
             createdAt: timestamp(
                 "created_at"

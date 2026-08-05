@@ -8,6 +8,7 @@ import { DbExecutor } from "../../../database/types/types";
 
 import {
     users,
+    wallets,
     withdrawals,
 } from "../../../database/schema";
 
@@ -48,6 +49,14 @@ export class AdminWithdrawalRepository {
                     phone: users.phone,
                     referralCode: users.referralCode,
                 },
+
+                wallet: {
+                    id: wallets.id,
+                    availableBalance: wallets.availableBalance,
+                    heldBalance: wallets.heldBalance,
+                    totalEarned: wallets.totalEarned,
+                    totalWithdrawn: wallets.totalWithdrawn,
+                }
             })
             .from(withdrawals)
 
@@ -56,6 +65,14 @@ export class AdminWithdrawalRepository {
                 eq(
                     withdrawals.userId,
                     users.id,
+                ),
+            )
+
+            .leftJoin(
+                wallets,
+                eq(
+                    withdrawals.walletId,
+                    wallets.id,
                 ),
             )
 
@@ -103,6 +120,14 @@ export class AdminWithdrawalRepository {
                         phone: users.phone,
                         referralCode: users.referralCode,
                     },
+
+                    wallet: {
+                        id: wallets.id,
+                        availableBalance: wallets.availableBalance,
+                        heldBalance: wallets.heldBalance,
+                        totalEarned: wallets.totalEarned,
+                        totalWithdrawn: wallets.totalWithdrawn,
+                    }
                 })
                 .from(withdrawals)
 
@@ -111,6 +136,14 @@ export class AdminWithdrawalRepository {
                     eq(
                         withdrawals.userId,
                         users.id,
+                    ),
+                )
+
+                .leftJoin(
+                    wallets,
+                    eq(
+                        withdrawals.walletId,
+                        wallets.id,
                     ),
                 )
 

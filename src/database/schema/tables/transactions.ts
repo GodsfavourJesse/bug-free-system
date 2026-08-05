@@ -2,6 +2,7 @@ import { pgTable, uuid, varchar, decimal, timestamp, jsonb, index, uniqueIndex }
 import { users } from "./users";
 import { wallets } from "./wallets";
 import { TransactionStatus, TransactionType } from "../../enums/transaction.enum";
+import { withdrawals } from "./withdrawals";
 
 
 export const transactions = pgTable(
@@ -26,6 +27,14 @@ export const transactions = pgTable(
                 () => wallets.id,
                 {
                     onDelete: "cascade",
+                },
+            ),
+
+        withdrawId: uuid("withdrawal_id")
+            .references(
+                () => withdrawals.id,
+                {
+                    onDelete: "set null",
                 },
             ),
 

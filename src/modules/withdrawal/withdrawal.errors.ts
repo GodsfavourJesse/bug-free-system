@@ -8,8 +8,7 @@ export class WithdrawalNotFoundError
             "Withdrawal request not found.",
         );
 
-        this.name =
-            "WithdrawalNotFoundError";
+        this.name = "WithdrawalNotFoundError";
     }
 }
 
@@ -24,8 +23,7 @@ export class WithdrawalAlreadyProcessedError
             "Withdrawal request has already been processed.",
         );
 
-        this.name =
-            "WithdrawalAlreadyProcessedError";
+        this.name = "WithdrawalAlreadyProcessedError";
     }
 }
 
@@ -40,8 +38,7 @@ export class WithdrawalMustBeApprovedError
             "Withdrawal request must be approved first.",
         );
 
-        this.name =
-            "WithdrawalMustBeApprovedError";
+        this.name = "WithdrawalMustBeApprovedError";
     }
 }
 
@@ -55,8 +52,7 @@ export class InsufficientWalletBalanceError
             "Insufficient wallet balance.",
         );
 
-        this.name =
-            "InsufficientWalletBalanceError";
+        this.name = "InsufficientWalletBalanceError";
     }
 }
 
@@ -70,8 +66,7 @@ export class InvalidWithdrawalAmountError
             "Invalid withdrawal amount.",
         );
 
-        this.name =
-            "InvalidWithdrawalAmountError";
+        this.name = "InvalidWithdrawalAmountError";
     }
 }
 
@@ -85,7 +80,39 @@ export class WithdrawalAlreadyPaidError
             "Withdrawal has already been paid.",
         );
 
-        this.name =
-            "WithdrawalAlreadyPaidError";
+        this.name = "WithdrawalAlreadyPaidError";
+    }
+}
+
+// Withdrawal amount is below the platform minimum.
+export class MinimumWithdrawalAmountError extends Error {
+    constructor() {
+        super(
+            "Minimum withdrawal amount is ₦3,000.",
+        );
+
+        this.name = "MinimumWithdrawalAmountError";
+    }
+}
+
+// Withdrawal has already been rejected.
+export class WithdrawalAlreadyRejectedError extends Error {
+    constructor() {
+        super(
+            "Withdrawal request has already been rejected.",
+        );
+
+        this.name = "WithdrawalAlreadyRejectedError";
+    }
+}
+
+// Withdrawal has already been approved.
+export class WithdrawalAlreadyApprovedError extends Error {
+    constructor() {
+        super(
+            "Withdrawal request has already been approved.",
+        );
+
+        this.name = "WithdrawalAlreadyApprovedError";
     }
 }

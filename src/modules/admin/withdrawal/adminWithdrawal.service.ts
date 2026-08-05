@@ -1,3 +1,4 @@
+import { withdrawalValidation } from "../../withdrawal/withdrawal.validation";
 import { withdrawalService } from "../../withdrawal/withdrawal.service";
 import { adminWithdrawalRepository } from "./adminWIthdrawal.repository";
 
@@ -18,9 +19,14 @@ export class AdminWithdrawalService {
     async findById(
         id: string,
     ) {
-        return adminWithdrawalRepository.findById(
-            undefined,
-            id,
+        const withdrawal =
+            await adminWithdrawalRepository.findById(
+                undefined,
+                id,
+            );
+
+        return withdrawalValidation.ensureWithdrawalExists(
+            withdrawal,
         );
     }
 
@@ -69,5 +75,4 @@ export class AdminWithdrawalService {
     }
 }
 
-export const adminWithdrawalService =
-    new AdminWithdrawalService();
+export const adminWithdrawalService = new AdminWithdrawalService();

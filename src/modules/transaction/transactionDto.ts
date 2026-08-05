@@ -18,27 +18,28 @@ export interface CommissionTransactionMetadata {
 
 export interface CreateSystemTransactionDto {
     userId: string;
-
     walletId: string;
-
     amount: string;
-
-    type: TransactionType;
-
-    status: TransactionStatus;
-
-    reference: string;
-
     balanceBefore: string;
-
     balanceAfter: string;
-
+    type: TransactionType;
+    status: TransactionStatus;
+    reference?: string;
     description?: string;
-
-    metadata?: CommissionTransactionMetadata | Record<string, unknown>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface PaginationDto {
     page?: number;
     limit?: number;
+}
+
+export interface CreateAdminWalletTransactionDto {
+    adminId: string;
+    type: TransactionType;
+    amount: string;
+    balanceBefore: string;
+    balanceAfter: string;
+    description: string;
+    metadata?: Record<string, unknown>;
 }

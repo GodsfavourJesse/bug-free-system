@@ -1,4 +1,3 @@
-
 import { db } from "../../../database";
 import { DbExecutor } from "../../../database/types/types";
 import { adminWalletRepository } from "./adminWallet.repository";
@@ -17,14 +16,15 @@ export class InsufficientAdminBalanceError extends Error {
 
 export class AdminWalletService {
 
-    // Lock admin wallet row.
-    // Prevent concurrent financial updates.
+    // Lock the admin wallet row.
+    // Used before any balance update.
     async lockWallet(
         executor: DbExecutor,
     ) {
-        const wallet = await adminWalletRepository.lockWallet(
-            executor,
-        );
+        const wallet =
+            await adminWalletRepository.lockWallet(
+                executor,
+            );
 
         if (!wallet) {
             throw new AdminWalletNotFoundError();
@@ -33,7 +33,8 @@ export class AdminWalletService {
         return wallet;
     }
 
-    // Get admin wallet without locking.
+    // Get the admin wallet.
+    // No row locking.
     async getWallet(
         executor: DbExecutor = db,
     ) {
@@ -49,12 +50,11 @@ export class AdminWalletService {
         return wallet;
     }
 
-    // Ensure admin has enough balance.
+    // Ensure the admin wallet has enough balance.
     async ensureSufficientBalance(
-        executor: DbExecutor,
+    executor: DbExecutor,
         amount: number,
     ) {
-
         const { wallet } =
             await this.getWallet(
                 executor,
@@ -72,42 +72,71 @@ export class AdminWalletService {
         return wallet;
     }
 
-    // Debit admin wallet safely.
+    // Debit the admin wallet.
     async debit(
         executor: DbExecutor,
         amount: number,
     ) {
+        const { wallet } =
+            await this.lockWallet(
+                executor,
+            );
 
-        const { wallet } = await this.getWallet(
-            executor,
-        );
-
-        const available =
+        const balanceBefore =
             Number(
                 wallet.availableBalance,
             );
 
-        if (available < amount) {
+        if (balanceBefore < amount) {
             throw new InsufficientAdminBalanceError();
         }
 
-        const newBalance =
-            available - amount;
+        const balanceAfter =
+            balanceBefore - amount;
 
         await adminWalletRepository.updateAvailableBalance(
             executor,
             wallet.id,
-            newBalance.toFixed(2),
+            balanceAfter.toFixed(2),
         );
 
         return {
             walletId: wallet.id,
-
             userId: wallet.userId,
+            balanceBefore,
+            balanceAfter,
+        };
+    }
 
-            balanceBefore: available,
+    // Credit the admin wallet.
+    async credit(
+        executor: DbExecutor,
+        amount: number,
+    ) {
+        const { wallet } =
+            await this.lockWallet(
+                executor,
+            );
 
-            balanceAfter: newBalance,
+        const balanceBefore =
+            Number(
+                wallet.availableBalance,
+            );
+
+        const balanceAfter =
+            balanceBefore + amount;
+
+        await adminWalletRepository.updateAvailableBalance(
+            executor,
+            wallet.id,
+            balanceAfter.toFixed(2),
+        );
+
+        return {
+            walletId: wallet.id,
+            userId: wallet.userId,
+            balanceBefore,
+            balanceAfter,
         };
     }
 }

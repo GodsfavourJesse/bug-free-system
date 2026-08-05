@@ -196,7 +196,45 @@ export class TransactionService {
         );
     }
 
-// Create a transaction from another module.
+    // Find transaction
+    async findByWithdrawalId(
+        withdrawalId: string,
+        executor: DbExecutor = db,
+    ) {
+        const transaction =
+            await transactionRepository.findByWithdrawalId(
+                executor,
+                withdrawalId,
+            );
+
+        return transactionValidation.ensureTransactionExists(
+            transaction,
+        );
+    }
+
+    // Update transaction status
+    async updateTransactionStatusByWithdrawalId(
+        executor: DbExecutor,
+        withdrawalId: string,
+        status: TransactionStatus,
+    ) {
+        transactionValidation.validateStatus(
+            status,
+        );
+
+        await this.findByWithdrawalId(
+            withdrawalId,
+            executor,
+        );
+
+        return transactionRepository.updateStatusByWithdrawalId(
+            executor,
+            withdrawalId,
+            status,
+        );
+    }
+
+    // Create a transaction from another module.
     //
     // Used by:
     // - Upgrade
@@ -224,7 +262,7 @@ export class TransactionService {
 
                 status: dto.status,
 
-                reference: dto.reference,
+                reference: dto.reference ?? this.generateReference(),
 
                 description: dto.description,
 

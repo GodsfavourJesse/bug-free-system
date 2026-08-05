@@ -1,10 +1,11 @@
 import {
-    and,
     desc,
     eq,
 } from "drizzle-orm";
-import { DbExecutor } from "../../database/types/types";
+
 import { db } from "../../database";
+import { DbExecutor } from "../../database/types/types";
+
 import { withdrawals } from "../../database/schema";
 import { WithdrawalStatus } from "../../database/enums/withdrawal.enum";
 
@@ -13,14 +14,7 @@ export class WithdrawalRepository {
     // Create a withdrawal request.
     async create(
         executor: DbExecutor = db,
-        data: {
-            userId: string;
-            walletId: string;
-            amount: string;
-            accountName: string;
-            accountNumber: string;
-            bankName: string;
-        },
+        data: typeof withdrawals.$inferInsert,
     ) {
         const [withdrawal] =
             await executor
@@ -51,8 +45,7 @@ export class WithdrawalRepository {
         return withdrawal ?? null;
     }
 
-    // Find every withdrawal
-    // belonging to one user.
+    // Find every withdrawal belonging to one user.
     async findByUser(
         executor: DbExecutor = db,
         userId: string,
@@ -107,6 +100,27 @@ export class WithdrawalRepository {
             );
     }
 
+    // Lock one withdrawal row.
+    async lockById(
+        executor: DbExecutor,
+        withdrawalId: string,
+    ) {
+        const [withdrawal] =
+            await executor
+                .select()
+                .from(withdrawals)
+                .where(
+                    eq(
+                        withdrawals.id,
+                        withdrawalId,
+                    ),
+                )
+                .limit(1)
+                .for("update");
+
+        return withdrawal ?? null;
+    }
+
     // Approve a withdrawal.
     async approve(
         executor: DbExecutor,
@@ -118,14 +132,9 @@ export class WithdrawalRepository {
             await executor
                 .update(withdrawals)
                 .set({
-                    status:
-                        WithdrawalStatus.APPROVED,
-
+                    status: WithdrawalStatus.APPROVED,
                     reviewedBy,
-
-                    reviewedAt:
-                        new Date(),
-
+                    reviewedAt: new Date(),
                     adminRemark,
                 })
                 .where(
@@ -150,14 +159,9 @@ export class WithdrawalRepository {
             await executor
                 .update(withdrawals)
                 .set({
-                    status:
-                        WithdrawalStatus.REJECTED,
-
+                    status: WithdrawalStatus.REJECTED,
                     reviewedBy,
-
-                    reviewedAt:
-                        new Date(),
-
+                    reviewedAt: new Date(),
                     adminRemark,
                 })
                 .where(
@@ -180,8 +184,7 @@ export class WithdrawalRepository {
             await executor
                 .update(withdrawals)
                 .set({
-                    status:
-                        WithdrawalStatus.PAID,
+                    status: WithdrawalStatus.PAID,
                 })
                 .where(
                     eq(
@@ -192,28 +195,6 @@ export class WithdrawalRepository {
                 .returning();
 
         return withdrawal;
-    }
-
-    // Lock one withdrawal row.
-    // Used during approval/rejection/payment.
-    async lockById(
-        executor: DbExecutor,
-        withdrawalId: string,
-    ) {
-        const [withdrawal] =
-            await executor
-                .select()
-                .from(withdrawals)
-                .where(
-                    eq(
-                        withdrawals.id,
-                        withdrawalId,
-                    ),
-                )
-                .limit(1)
-                .for("update");
-
-        return withdrawal ?? null;
     }
 }
 

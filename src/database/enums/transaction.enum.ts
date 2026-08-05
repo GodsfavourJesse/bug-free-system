@@ -15,6 +15,8 @@ export enum TransactionType {
     ORDER_REWARD = "order_reward",
 
     ADMIN_DEPOSIT_DEBIT = "admin_deposit_debit",
+    ADMIN_WITHDRAWAL = "admin_withdrawal",
+    ADMIN_ADJUSTMENT = "admin_adjustment",
 }
 
 export enum TransactionStatus {

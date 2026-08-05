@@ -1,5 +1,6 @@
 import { db } from "../../../../database";
 import { DbExecutor } from "../../../../database/types/types";
+import { CreateAdminWalletTransactionDto } from "../../../transaction/transactionDto";
 import { adminWalletTransactionRepository } from "./adminWalletTransaction.repository";
 
 export class AdminWalletTransactionService {
@@ -15,12 +16,12 @@ export class AdminWalletTransactionService {
 
     async createTransaction(
         executor: DbExecutor,
-        data: any,
+        data: CreateAdminWalletTransactionDto,
     ) {
         return adminWalletTransactionRepository
             .create(
                 executor,
-                data
+                data,
             );
     }
 }

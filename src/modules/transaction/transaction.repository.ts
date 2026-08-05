@@ -165,6 +165,49 @@ export class TransactionRepository {
 
         return transaction;
     }
+
+    // FInd transaction by withdrawal.
+    async findByWithdrawalId(
+        executor: DbExecutor = db,
+        withdrawalId: string,
+    ) {
+        const [transaction] =
+            await executor
+                .select()
+                .from(transactions)
+                .where(
+                    eq(
+                        transactions.withdrawId,
+                        withdrawalId,
+                    ),
+                )
+                .limit(1);
+
+        return transaction ?? null;
+    }
+
+    // update transaction status by withdrawal
+    async updateStatusByWithdrawalId(
+        executor: DbExecutor = db,
+        withdrawalId: string,
+        status: TransactionStatus,
+    ) {
+        const [transaction] =
+            await executor
+                .update(transactions)
+                .set({
+                    status,
+                })
+                .where(
+                    eq(
+                        transactions.withdrawId,
+                        withdrawalId,
+                    ),
+                )
+                .returning();
+
+        return transaction ?? null;
+    }
 }
 
 export const transactionRepository = new TransactionRepository();
