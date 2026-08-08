@@ -1,40 +1,52 @@
 import { Router } from "express";
 
 import { membershipPlanController } from "./membershipPlan.controller";
+
 import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
-// Returns every membership plan.
+// PUBLIC
+
+// Membership catalog
 router.get(
     "/",
-    membershipPlanController.getPlans,
+    membershipPlanController.getMembershipCatalog,
 );
 
-// Returns a membership plan by slug.
-router.get(
-    "/slug/:slug",
-    membershipPlanController.getPlanBySlug,
-);
+// AUTHENTICATED USER
 
-// Returns the authenticated user's current membership plan.
+// Current membership
 router.get(
     "/current",
     authenticate,
     membershipPlanController.getCurrentPlan,
 );
 
-// Returns the authenticated user's next available membership plan.
+// Next available membership
 router.get(
     "/next",
     authenticate,
     membershipPlanController.getNextPlan,
 );
 
-// Returns a membership plan by ID.
+// INTERNAL / ID
+
+// Membership by UUID
 router.get(
-    "/:id",
+    "/id/:id",
     membershipPlanController.getPlan,
+);
+
+// PUBLIC / SLUG
+
+// Membership by slug
+//
+// Example:
+// /api/v1/membership-plans/1-star
+router.get(
+    "/:slug",
+    membershipPlanController.getPlanBySlug,
 );
 
 export default router;

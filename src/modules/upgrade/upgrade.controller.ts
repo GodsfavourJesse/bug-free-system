@@ -2,19 +2,13 @@ import { Request, Response } from "express";
 
 import { upgradeService } from "./upgrade.service";
 
-/**
- * Upgrade Request Controller
- *
- * Handles HTTP requests only.
- * Business logic belongs to the service layer.
- */
+// Upgrade Request Controller
+// Handles HTTP requests only.
+// Business logic belongs to the service layer.
 export class UpgradeController {
 
-    /**
-     * POST /upgrade-requests
-     *
-     * Create a new upgrade request.
-     */
+    // POST /upgrade-requests
+    // Create a new upgrade request.
     async requestUpgrade(
         req: Request,
         res: Response,
@@ -24,17 +18,10 @@ export class UpgradeController {
         const request = await upgradeService.requestUpgrade(
             userId,
             {
-                requestedMembershipPlanId:
-                    req.body.requestedMembershipPlanId,
-
-                paymentMethod:
-                    req.body.paymentMethod,
-
-                paymentProof:
-                    req.body.paymentProof,
-
-                metadata:
-                    req.body.metadata,
+                requestedMembershipPlanId: req.body.requestedMembershipPlanId,
+                paymentMethod: req.body.paymentMethod,
+                paymentProof: req.body.paymentProof,
+                metadata: req.body.metadata,
             },
         );
 
@@ -46,11 +33,8 @@ export class UpgradeController {
         });
     }
 
-    /**
-     * DELETE /upgrade-requests/:id
-     *
-     * Cancel an upgrade request.
-     */
+    // DELETE /upgrade-requests/:id
+    // Cancel an upgrade request.
     async cancelRequest(
         req: Request,
         res: Response,
@@ -69,12 +53,8 @@ export class UpgradeController {
         });
     }
 
-    /**
-     * GET /upgrade-requests
-     *
-     * Return authenticated user's
-     * upgrade requests.
-     */
+    // GET /upgrade-requests
+    // Return authenticated user's upgrade requests.
     async findByUser(
         req: Request,
         res: Response,
@@ -90,11 +70,8 @@ export class UpgradeController {
         });
     }
 
-    /**
-     * GET /upgrade-requests/:id
-     *
-     * Return a single upgrade request.
-     */
+    // /GET /upgrade-requests/:id
+    // Return a single upgrade request.
     async findById(
         req: Request,
         res: Response,
@@ -110,14 +87,9 @@ export class UpgradeController {
         });
     }
 
-    /**
-     * GET /upgrade-requests/pending
-     *
-     * Return all pending upgrade requests.
-     *
-     * (Admin routes will later replace this,
-     * but included for this phase.)
-     */
+    // GET /upgrade-requests/pending
+    // Return all pending upgrade requests.
+    // (Admin routes will later replace this, but included for this phase.)
     async findPending(
         req: Request,
         res: Response,
@@ -128,6 +100,29 @@ export class UpgradeController {
         return res.json({
             success: true,
             data: requests,
+        });
+    }
+
+    // GET /upgrade-requests/validate/:membershipPlanId
+    // Validate whether the authenticated user can upgrade to the requested membership.
+    async validateUpgrade(
+        req: Request,
+        res: Response,
+    ) {
+        const membershipPlanId = Array.isArray(
+            req.params.membershipPlanId,
+        )
+            ? req.params.membershipPlanId[0]
+            : req.params.membershipPlanId;
+
+        const result = await upgradeService.validateUpgrade(
+            req.user!.id,
+            membershipPlanId,
+        );
+
+        return res.json({
+            success: true,
+            data: result,
         });
     }
 }

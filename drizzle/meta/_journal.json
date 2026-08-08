@@ -113,6 +113,34 @@
       "when": 1785884352502,
       "tag": "0015_melted_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1786032080479,
+      "tag": "0016_luxuriant_thena",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786032555683,
+      "tag": "0017_strange_zaran",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786032868796,
+      "tag": "0018_cuddly_komodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786047115673,
+      "tag": "0019_big_grandmaster",
+      "breakpoints": true
     }
   ]
 }

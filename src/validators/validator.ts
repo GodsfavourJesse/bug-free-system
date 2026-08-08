@@ -6,19 +6,34 @@ export const registerSchema = z
         phone: z
             .string()
             .trim()
-            .transform((value) => value.replace(/\s+/g, ""))
+            .transform((value) =>
+                value.replace(/\s+/g, ""),
+            )
             .refine(
-                (value) => /^[0-9]{10,15}$/.test(value),
-                "Invalid phone number."
+                (value) =>
+                    /^[0-9]{10,15}$/.test(value),
+                "Invalid phone number.",
             ),
 
         password: z
             .string()
-            .min(8, "Password must be at least 8 characters.")
+            .min(
+                8,
+                "Password must be at least 8 characters.",
+            )
             .max(100)
-            .regex(/[A-Z]/, "Password must contain an uppercase letter.")
-            .regex(/[a-z]/, "Password must contain a lowercase letter.")
-            .regex(/[0-9]/, "Password must contain a number."),
+            .regex(
+                /[A-Z]/,
+                "Password must contain an uppercase letter.",
+            )
+            .regex(
+                /[a-z]/,
+                "Password must contain a lowercase letter.",
+            )
+            .regex(
+                /[0-9]/,
+                "Password must contain a number.",
+            ),
 
         confirmPassword: z.string(),
 
@@ -27,12 +42,13 @@ export const registerSchema = z
             .trim()
             .optional(),
 
-        referral:z
+        referral: z
             .string()
             .trim()
             .toUpperCase()
-            .min(4,"Referral code is required.")
-            .max(30),
+            .max(30)
+            .optional()
+            .or(z.literal("")),
     })
     .refine(
         (data) =>
@@ -40,7 +56,7 @@ export const registerSchema = z
         {
             path: ["confirmPassword"],
             message: "Passwords do not match.",
-        }
+        },
     )
     .strict();
 

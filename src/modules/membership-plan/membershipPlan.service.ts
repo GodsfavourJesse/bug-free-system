@@ -1,10 +1,26 @@
-import { membershipPlanValidation } from "./membershipPlan.validation";
 import { eq } from "drizzle-orm";
-import { membershipPlanRepository } from "./membershipPlan.repository";
+
 import { db } from "../../database";
 import { users } from "../../database/schema";
 
+import { membershipPlanRepository } from "./membershipPlan.repository";
+import { membershipPlanValidation } from "./membershipPlan.validation";
+
 export class MembershipPlanService {
+
+    // ============================================================
+    // PUBLIC
+    // ============================================================
+
+    /**
+     * Returns the membership catalog shown
+     * in the Membership Center.
+     */
+    async getMembershipCatalog() {
+        return membershipPlanRepository.findMembershipCatalog(
+            db,
+        );
+    }
 
     /**
      * Returns every membership plan.
@@ -16,7 +32,7 @@ export class MembershipPlanService {
     }
 
     /**
-     * Returns a single membership plan.
+     * Returns one membership using its ID.
      */
     async getPlan(
         id: string,
@@ -32,7 +48,9 @@ export class MembershipPlanService {
         );
     }
 
-    // Returns a membership plan using its slug.
+    /**
+     * Returns one membership using its slug.
+     */
     async getPlanBySlug(
         slug: string,
     ) {
@@ -47,9 +65,12 @@ export class MembershipPlanService {
         );
     }
 
+    // ============================================================
+    // USER
+    // ============================================================
+
     /**
-     * Returns the current membership
-     * plan for a user.
+     * Returns the user's current membership.
      */
     async getCurrentPlan(
         userId: string,
@@ -83,8 +104,8 @@ export class MembershipPlanService {
     }
 
     /**
-     * Returns the next membership
-     * plan available to the user.
+     * Returns the next upgrade available
+     * for the current user.
      */
     async getNextPlan(
         userId: string,
@@ -125,9 +146,9 @@ export class MembershipPlanService {
         return nextPlan;
     }
 
-    // -------------------------------------------------
-    // ADMIN SERVICE
-    // -------------------------------------------------
+    // ============================================================
+    // ADMIN
+    // ============================================================
 
     /**
      * Phase M7

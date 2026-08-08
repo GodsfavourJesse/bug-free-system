@@ -15,6 +15,7 @@ import { users } from "../../database/schema";
 import { UpgradeRequestStatus } from "../../database/enums/upgrade.enum";
 import { NotificationType } from "../../database/enums/notification.enum";
 import { db } from "../../database";
+import { walletService } from "../wallet/wallet.service";
 
 
 export class UpgradeService {
@@ -233,6 +234,234 @@ export class UpgradeService {
         return upgradeRepository.findPending(
             db,
         );
+    }
+
+    async validateUpgrade(
+        userId: string,
+        requestedMembershipPlanId: string,
+    ) {
+        // Find authenticated user
+        const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+        if (!user) {
+            throw new Error("User not found.");
+        }
+
+        if (!user.membershipPlanId) {
+            throw new Error(
+                "User has no membership plan.",
+            );
+        }
+
+        // Current membership
+        const currentPlan = membershipPlanValidation.ensureMembershipPlanExists(
+            await membershipPlanRepository.findById(
+                db,
+                user.membershipPlanId,
+            ),
+        );
+
+        // Requested membership
+        const requestedPlan = membershipPlanValidation.ensureMembershipPlanExists(
+            await membershipPlanRepository.findById(
+                db,
+                requestedMembershipPlanId,
+            ),
+        );
+
+        // Highest membership
+        const highestPlan = membershipPlanValidation.ensureMembershipPlanExists(
+            await membershipPlanRepository.findHighest(
+                db,
+            ),
+        );
+
+        // Wallet
+        const wallet = await walletService.findByUserId(
+            db,
+            userId,
+        );
+
+        if (!wallet) {
+            throw new Error(
+                "Wallet not found.",
+            );
+        }
+
+        // Existing pending request
+        const requests = await upgradeRepository.findByUser(
+            db,
+            userId,
+        );
+
+        const pendingRequest = requests.find(
+            (request) =>
+                request.status ===
+                    UpgradeRequestStatus.PENDING ||
+                request.status ===
+                    UpgradeRequestStatus.UNDER_REVIEW,
+        );
+
+        // Perform validations
+        let validMembership = true;
+        let sequentialUpgrade = true;
+        let noPendingRequest = true;
+        let sufficientBalance = true;
+
+        const failedChecks: {
+            key: string;
+            message: string;
+        }[] = [];
+
+        // Already highest
+        if (
+            currentPlan.sortOrder >=
+            highestPlan.sortOrder
+        ) {
+            validMembership = false;
+
+            failedChecks.push({
+                key: "highestMembership",
+                message: "You are already on the highest membership plan.",
+            });
+        }
+
+        // Requested plan must be above current
+        if (
+            requestedPlan.sortOrder <=
+            currentPlan.sortOrder
+        ) {
+            sequentialUpgrade = false;
+
+            failedChecks.push({
+                key: "upgradeDirection",
+                message: "You can only upgrade to a higher membership plan.",
+            });
+        }
+
+        // Sequential upgrade
+        if (
+            requestedPlan.sortOrder >
+                currentPlan.sortOrder &&
+            requestedPlan.sortOrder !==
+                currentPlan.sortOrder + 1
+        ) {
+            sequentialUpgrade = false;
+
+            failedChecks.push({
+                key: "sequence",
+                message: "Membership upgrades must follow the next available plan.",
+            });
+        }
+
+        // Plan must be active
+        if (!requestedPlan.isActive) {
+            validMembership = false;
+
+            failedChecks.push({
+                key: "inactivePlan",
+                message: "This membership plan is currently inactive.",
+            });
+        }
+
+        // Plan must allow upgrades
+        if (!requestedPlan.canUpgradeTo) {
+            validMembership = false;
+
+            failedChecks.push({
+                key: "upgradeDisabled",
+                message: "This membership plan cannot currently be upgraded to.",
+            });
+        }
+
+        // Pending request
+        if (pendingRequest) {
+            noPendingRequest = false;
+
+            failedChecks.push({
+                key: "pendingRequest",
+                message: "You already have a pending upgrade request.",
+            });
+        }
+
+        // Wallet balance
+        if (
+            Number(wallet.availableBalance) <
+            Number(requestedPlan.upgradePrice)
+        ) {
+            sufficientBalance = false;
+
+            failedChecks.push({
+                key: "wallet",
+                message: "Insufficient wallet balance.",
+            });
+        }
+
+        const canUpgrade =
+            validMembership &&
+            sequentialUpgrade &&
+            noPendingRequest &&
+            sufficientBalance;
+
+        return {
+            canUpgrade,
+
+            currentPlan: {
+                id: currentPlan.id,
+                name: currentPlan.name,
+                sortOrder: currentPlan.sortOrder,
+            },
+
+            requestedPlan: {
+                id: requestedPlan.id,
+                name: requestedPlan.name,
+                sortOrder: requestedPlan.sortOrder,
+                upgradePrice: requestedPlan.upgradePrice,
+            },
+
+            wallet: {
+                balance: wallet.availableBalance,
+                required: requestedPlan.upgradePrice,
+                sufficient: sufficientBalance,
+            },
+
+            checks: [
+            {
+                key: "membership",
+                title: "Membership Eligible",
+                description:
+                    "Your current membership can be upgraded.",
+                passed: validMembership,
+            },
+            {
+                key: "sequence",
+                title: "Upgrade Path",
+                description:
+                    "You're upgrading to the next membership level.",
+                passed: sequentialUpgrade,
+            },
+            {
+                key: "wallet",
+                title: "Wallet Balance",
+                description:
+                    "Your wallet contains enough balance.",
+                passed: sufficientBalance,
+            },
+            {
+                key: "pending",
+                title: "Pending Request",
+                description:
+                    "No upgrade request is awaiting approval.",
+                passed: noPendingRequest,
+            },
+        ],
+
+            failedChecks,
+        };
     }
 }
 

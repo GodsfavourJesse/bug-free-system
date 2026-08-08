@@ -6,23 +6,83 @@ import {
     gt,
     lt,
 } from "drizzle-orm";
-import { DbExecutor } from "../../database/types/types";
-import { db } from "../../database";
-import { membershipPlans } from "../../database/schema";
 
+import { db } from "../../database";
+import { DbExecutor } from "../../database/types/types";
+
+import {
+    membershipPlans,
+    dailyOrderConfigs,
+} from "../../database/schema";
 
 export class MembershipPlanRepository {
 
     /**
-     * Find membership plan by ID.
+     * Find membership by ID.
+     *
+     * Includes daily order configuration.
      */
     async findById(
         executor: DbExecutor = db,
         id: string,
     ) {
         const [plan] = await executor
-            .select()
+            .select({
+                id: membershipPlans.id,
+                slug: membershipPlans.slug,
+                name: membershipPlans.name,
+
+                sortOrder: membershipPlans.sortOrder,
+
+                description: membershipPlans.description,
+
+                upgradePrice:
+                    membershipPlans.upgradePrice,
+
+                invitationCommissionLevel1:
+                    membershipPlans.invitationCommissionLevel1,
+
+                invitationCommissionLevel2:
+                    membershipPlans.invitationCommissionLevel2,
+
+                invitationCommissionLevel3:
+                    membershipPlans.invitationCommissionLevel3,
+
+                orderCommissionLevel1:
+                    membershipPlans.orderCommissionLevel1,
+
+                orderCommissionLevel2:
+                    membershipPlans.orderCommissionLevel2,
+
+                orderCommissionLevel3:
+                    membershipPlans.orderCommissionLevel3,
+
+                isInternship:
+                    membershipPlans.isInternship,
+
+                canUpgradeTo:
+                    membershipPlans.canUpgradeTo,
+
+                isActive: membershipPlans.isActive,
+
+                // Daily order configuration
+                tasksPerDay:
+                    dailyOrderConfigs.tasksPerDay,
+
+                rewardPerTask:
+                    dailyOrderConfigs.rewardPerTask,
+
+                dailyRewardLimit:
+                    dailyOrderConfigs.dailyRewardLimit,
+            })
             .from(membershipPlans)
+            .leftJoin(
+                dailyOrderConfigs,
+                eq(
+                    dailyOrderConfigs.membershipPlanId,
+                    membershipPlans.id,
+                ),
+            )
             .where(
                 eq(
                     membershipPlans.id,
@@ -35,15 +95,69 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Find membership plan by slug.
+     * Find membership by slug.
+     *
+     * Includes daily order configuration.
      */
     async findBySlug(
         executor: DbExecutor = db,
         slug: string,
     ) {
         const [plan] = await executor
-            .select()
+            .select({
+                id: membershipPlans.id,
+                slug: membershipPlans.slug,
+                name: membershipPlans.name,
+
+                sortOrder: membershipPlans.sortOrder,
+
+                description: membershipPlans.description,
+
+                upgradePrice:
+                    membershipPlans.upgradePrice,
+
+                invitationCommissionLevel1:
+                    membershipPlans.invitationCommissionLevel1,
+
+                invitationCommissionLevel2:
+                    membershipPlans.invitationCommissionLevel2,
+
+                invitationCommissionLevel3:
+                    membershipPlans.invitationCommissionLevel3,
+
+                orderCommissionLevel1:
+                    membershipPlans.orderCommissionLevel1,
+
+                orderCommissionLevel2:
+                    membershipPlans.orderCommissionLevel2,
+
+                orderCommissionLevel3:
+                    membershipPlans.orderCommissionLevel3,
+
+                isInternship:
+                    membershipPlans.isInternship,
+
+                canUpgradeTo:
+                    membershipPlans.canUpgradeTo,
+
+                // Daily order configuration
+                tasksPerDay:
+                    dailyOrderConfigs.tasksPerDay,
+
+                rewardPerTask:
+                    dailyOrderConfigs.rewardPerTask,
+
+                dailyRewardLimit:
+                    dailyOrderConfigs.dailyRewardLimit,
+            })
             .from(membershipPlans)
+            .leftJoin(
+                dailyOrderConfigs,
+                eq(
+                    dailyOrderConfigs.membershipPlanId,
+                    membershipPlans.id,
+                ),
+            )
             .where(
                 eq(
                     membershipPlans.slug,
@@ -56,7 +170,7 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Returns every membership plan.
+     * Returns every membership.
      */
     async findAll(
         executor: DbExecutor = db,
@@ -72,7 +186,7 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Returns plans users can currently join.
+     * Returns only active memberships.
      */
     async findActive(
         executor: DbExecutor = db,
@@ -94,7 +208,7 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Returns the internship membership.
+     * Internship membership.
      */
     async findInternship(
         executor: DbExecutor = db,
@@ -114,7 +228,7 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Returns the highest membership.
+     * Highest membership.
      */
     async findHighest(
         executor: DbExecutor = db,
@@ -122,6 +236,12 @@ export class MembershipPlanRepository {
         const [plan] = await executor
             .select()
             .from(membershipPlans)
+            .where(
+                eq(
+                    membershipPlans.isActive,
+                    true,
+                ),
+            )
             .orderBy(
                 desc(
                     membershipPlans.sortOrder,
@@ -133,20 +253,70 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Returns the next membership
-     * available for upgrade.
-     *
-     * Skips inactive plans.
-     * Skips plans that cannot
-     * currently receive upgrades.
+     * Next upgradeable membership.
      */
     async findNext(
         executor: DbExecutor = db,
         currentSortOrder: number,
     ) {
         const [plan] = await executor
-            .select()
+            .select({
+                id: membershipPlans.id,
+                slug: membershipPlans.slug,
+                name: membershipPlans.name,
+
+                sortOrder: membershipPlans.sortOrder,
+
+                description: membershipPlans.description,
+
+                upgradePrice:
+                    membershipPlans.upgradePrice,
+
+                invitationCommissionLevel1:
+                    membershipPlans.invitationCommissionLevel1,
+
+                invitationCommissionLevel2:
+                    membershipPlans.invitationCommissionLevel2,
+
+                invitationCommissionLevel3:
+                    membershipPlans.invitationCommissionLevel3,
+
+                orderCommissionLevel1:
+                    membershipPlans.orderCommissionLevel1,
+
+                orderCommissionLevel2:
+                    membershipPlans.orderCommissionLevel2,
+
+                orderCommissionLevel3:
+                    membershipPlans.orderCommissionLevel3,
+
+                isInternship:
+                    membershipPlans.isInternship,
+
+                canUpgradeTo:
+                    membershipPlans.canUpgradeTo,
+
+                isActive:
+                    membershipPlans.isActive,
+
+                // Daily order configuration
+                tasksPerDay:
+                    dailyOrderConfigs.tasksPerDay,
+
+                rewardPerTask:
+                    dailyOrderConfigs.rewardPerTask,
+
+                dailyRewardLimit:
+                    dailyOrderConfigs.dailyRewardLimit,
+            })
             .from(membershipPlans)
+            .leftJoin(
+                dailyOrderConfigs,
+                eq(
+                    dailyOrderConfigs.membershipPlanId,
+                    membershipPlans.id,
+                ),
+            )
             .where(
                 and(
                     gt(
@@ -176,8 +346,7 @@ export class MembershipPlanRepository {
     }
 
     /**
-     * Returns the previous
-     * active membership.
+     * Previous active membership.
      */
     async findPrevious(
         executor: DbExecutor = db,
@@ -209,6 +378,9 @@ export class MembershipPlanRepository {
         return plan ?? null;
     }
 
+    /**
+     * Memberships users are allowed to upgrade into.
+     */
     async findUpgradeable(
         executor: DbExecutor = db,
     ) {
@@ -221,10 +393,100 @@ export class MembershipPlanRepository {
                         membershipPlans.isActive,
                         true,
                     ),
+
                     eq(
                         membershipPlans.canUpgradeTo,
                         true,
                     ),
+                ),
+            )
+            .orderBy(
+                asc(
+                    membershipPlans.sortOrder,
+                ),
+            );
+    }
+
+    /**
+     * Membership catalog.
+     *
+     * This is the main endpoint consumed by
+     * the frontend Membership Center.
+     *
+     * Includes:
+     *
+     * - membership information
+     * - daily tasks
+     * - reward per task
+     * - total daily reward
+     */
+    async findMembershipCatalog(
+        executor: DbExecutor = db,
+    ) {
+        return executor
+            .select({
+                id: membershipPlans.id,
+                slug: membershipPlans.slug,
+                name: membershipPlans.name,
+
+                sortOrder:
+                    membershipPlans.sortOrder,
+
+                description:
+                    membershipPlans.description,
+
+                upgradePrice:
+                    membershipPlans.upgradePrice,
+
+                invitationCommissionLevel1:
+                    membershipPlans.invitationCommissionLevel1,
+
+                invitationCommissionLevel2:
+                    membershipPlans.invitationCommissionLevel2,
+
+                invitationCommissionLevel3:
+                    membershipPlans.invitationCommissionLevel3,
+
+                orderCommissionLevel1:
+                    membershipPlans.orderCommissionLevel1,
+
+                orderCommissionLevel2:
+                    membershipPlans.orderCommissionLevel2,
+
+                orderCommissionLevel3:
+                    membershipPlans.orderCommissionLevel3,
+
+                isInternship:
+                    membershipPlans.isInternship,
+
+                canUpgradeTo:
+                    membershipPlans.canUpgradeTo,
+
+                // ==========================================
+                // DAILY QUOTA
+                // ==========================================
+
+                tasksPerDay:
+                    dailyOrderConfigs.tasksPerDay,
+
+                rewardPerTask:
+                    dailyOrderConfigs.rewardPerTask,
+
+                dailyRewardLimit:
+                    dailyOrderConfigs.dailyRewardLimit,
+            })
+            .from(membershipPlans)
+            .leftJoin(
+                dailyOrderConfigs,
+                eq(
+                    dailyOrderConfigs.membershipPlanId,
+                    membershipPlans.id,
+                ),
+            )
+            .where(
+                eq(
+                    membershipPlans.isActive,
+                    true,
                 ),
             )
             .orderBy(

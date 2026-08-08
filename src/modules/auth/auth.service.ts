@@ -38,7 +38,9 @@ export class AuthService {
             await membershipPlanRepository.findInternship(db),
         );
 
-        const referredBy = await resolveReferral(referral);
+        const referredBy = referral
+            ? await resolveReferral(referral)
+            : null;
 
         const hashedPassword = await hashPassword(password);
 

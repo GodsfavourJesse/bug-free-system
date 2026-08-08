@@ -4,15 +4,17 @@ import { membershipPlanService } from "./membershipPlan.service";
 
 export class MembershipPlanController {
 
-    // Returns every membership plan.
-    async getPlans(
+    /**
+     * Returns the Membership Center catalog.
+     */
+    async getMembershipCatalog(
         req: Request,
         res: Response,
         next: NextFunction,
     ) {
         try {
             const plans =
-                await membershipPlanService.getPlans();
+                await membershipPlanService.getMembershipCatalog();
 
             res.status(200).json({
                 success: true,
@@ -24,42 +26,16 @@ export class MembershipPlanController {
         }
     }
 
-    // Returns a membership plan by ID.
-    async getPlan(
-        req: Request,
-        res: Response,
-        next: NextFunction,
-    ) {
-        try {
-            const id = String(
-                req.params.id,
-            );
-
-            const plan =
-                await membershipPlanService.getPlan(
-                    id,
-                );
-
-            res.status(200).json({
-                success: true,
-                data: plan,
-            });
-
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    // Returns a membership plan by slug.
+    /**
+     * Returns one membership using its slug.
+     */
     async getPlanBySlug(
         req: Request,
         res: Response,
         next: NextFunction,
     ) {
         try {
-            const slug = String(
-                req.params.slug,
-            );
+            const slug = String(req.params.slug);
 
             const plan =
                 await membershipPlanService.getPlanBySlug(
@@ -76,7 +52,36 @@ export class MembershipPlanController {
         }
     }
 
-    // Returns the authenticated user's current membership plan.
+    /**
+     * Returns one membership by ID.
+     * (Admin/Internal use only.)
+     */
+    async getPlan(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            const id = String(req.params.id);
+
+            const plan =
+                await membershipPlanService.getPlan(
+                    id,
+                );
+
+            res.status(200).json({
+                success: true,
+                data: plan,
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Returns the authenticated user's current membership.
+     */
     async getCurrentPlan(
         req: Request,
         res: Response,
@@ -98,7 +103,9 @@ export class MembershipPlanController {
         }
     }
 
-    // Returns the next available membership plan.
+    /**
+     * Returns the next upgrade available.
+     */
     async getNextPlan(
         req: Request,
         res: Response,

@@ -1,19 +1,14 @@
 import { Router } from "express";
-
 import { upgradeController } from "./upgrade.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
-// --------------------------------------------------
 // All upgrade request routes require authentication.
-// --------------------------------------------------
 
 router.use(authenticate);
 
-// --------------------------------------------------
 // User Routes
-// --------------------------------------------------
 
 // Create a new upgrade request.
 router.post(
@@ -40,6 +35,13 @@ router.get(
 router.get(
     "/pending",
     upgradeController.findPending.bind(
+        upgradeController,
+    ),
+);
+
+router.get(
+    "/validate/:membershipPlanId",
+    upgradeController.validateUpgrade.bind(
         upgradeController,
     ),
 );
