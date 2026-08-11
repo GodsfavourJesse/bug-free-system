@@ -1,1 +1,0 @@
-ALTER TABLE "advertisements" DROP COLUMN "category";

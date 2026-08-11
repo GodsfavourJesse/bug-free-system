@@ -1,1 +1,0 @@
-ALTER TABLE "membership_plans" ALTER COLUMN "badge_label" SET DEFAULT 'INTERN';

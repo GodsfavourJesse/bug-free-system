@@ -1,2 +1,0 @@
-ALTER TABLE "membership_plans" ADD COLUMN "can_upgrade_to" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-CREATE INDEX "membership_plans_can_upgrade_to_idx" ON "membership_plans" USING btree ("can_upgrade_to");
