@@ -10,13 +10,13 @@ import { resolveReferral } from "../../helpers/register.helper";
 import { hashPassword } from "../../utils/hash";
 import { generateReferralCode } from "../../helpers/referral.helper";
 import { withTransaction } from "../../database/transaction/transaction";
-import { validateAdminLogin, validateUserLogin } from "../../helpers/login.helper";
+import { validateAdminLogin, validateUserLogin} from "../../helpers/login.helper";
 import { validateRefreshToken } from "../../helpers/refresh.helper";
 
 export class AuthService {
 
     // Register a new user.
-    // Every user receives a wallet before registration completes.
+    // New users start on the internship membership and receive a wallet.
     async register(data: RegisterInput) {
         const {
             phone,
@@ -25,17 +25,20 @@ export class AuthService {
             country,
         } = data;
 
-        const existingUser =
-            await authRepository.findUserByPhone(phone);
+        const existingUser = await authRepository.findUserByPhone(
+            phone,
+        );
 
         if (existingUser) {
             throw new Error(
-                "Phone number already exists."
+                "Phone number already exists.",
             );
         }
 
         const internshipPlan = membershipPlanValidation.ensureMembershipPlanExists(
-            await membershipPlanRepository.findInternship(db),
+            await membershipPlanRepository.findInternship(
+                db,
+            ),
         );
 
         const referredBy = referral
@@ -48,8 +51,7 @@ export class AuthService {
 
         const user = await withTransaction(
             async (tx) => {
-
-                const createUser = await authRepository.createUser(
+                const createdUser = await authRepository.createUser(
                     tx,
                     {
                         phone,
@@ -63,10 +65,10 @@ export class AuthService {
 
                 await walletRepository.create(
                     tx,
-                    createUser.id,
+                    createdUser.id,
                 );
 
-                return createUser;
+                return createdUser;
             },
         );
 
@@ -79,22 +81,35 @@ export class AuthService {
             db,
             user.id,
             tokens.refreshToken,
-            tokens.refreshTokenExpiresAt
+            tokens.refreshTokenExpiresAt,
         );
 
         return {
-            user: toUserResponse(user),
+            user: toUserResponse({
+                user,
+                membership: internshipPlan,
+            }),
+
             accessToken: tokens.accessToken,
+
             refreshToken: tokens.refreshToken,
         };
     }
 
-    // User Login
+    // User login.
     async login(data: LoginInput) {
         const user = await validateUserLogin(
             data.phone,
-            data.password
+            data.password,
         );
+
+        const membership =
+            user.membershipPlanId
+                ? await membershipPlanRepository.findById(
+                    db,
+                    user.membershipPlanId,
+                )
+                : null;
 
         const tokens = tokenService.generateTokens({
             id: user.id,
@@ -105,21 +120,27 @@ export class AuthService {
             db,
             user.id,
             tokens.refreshToken,
-            tokens.refreshTokenExpiresAt
+            tokens.refreshTokenExpiresAt,
         );
 
         return {
-            user: toUserResponse(user),
+            user: toUserResponse({
+                user,
+                membership,
+            }),
+
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
         };
     }
 
-    // Admin Login
-    async adminLogin(data: AdminLoginInput) {
+    // Admin login.
+    async adminLogin(
+        data: AdminLoginInput,
+    ) {
         const admin = await validateAdminLogin(
             data.email,
-            data.password
+            data.password,
         );
 
         const tokens = tokenService.generateTokens({
@@ -131,22 +152,26 @@ export class AuthService {
             db,
             admin.id,
             tokens.refreshToken,
-            tokens.refreshTokenExpiresAt
+            tokens.refreshTokenExpiresAt,
         );
 
         return {
-            user: toUserResponse(admin),
+            user: toUserResponse({
+                user: admin,
+                membership: null,
+            }),
+
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
         };
     }
 
-    // Refresh access and refresh tokens.
+    // Refresh authentication tokens.
     async refresh(
-        refreshToken: string
+        refreshToken: string,
     ) {
         const user = await validateRefreshToken(
-            refreshToken
+            refreshToken,
         );
 
         const tokens = tokenService.generateTokens({
@@ -158,14 +183,14 @@ export class AuthService {
             async (tx) => {
                 await authRepository.deleteRefreshToken(
                     tx,
-                    refreshToken
+                    refreshToken,
                 );
 
                 await authRepository.saveRefreshToken(
                     tx,
                     user.id,
                     tokens.refreshToken,
-                    tokens.refreshTokenExpiresAt
+                    tokens.refreshTokenExpiresAt,
                 );
             },
         );
@@ -176,11 +201,13 @@ export class AuthService {
         };
     }
 
-    // Logout
-    async logout(refreshToken: string) {
+    // Logout.
+    async logout(
+        refreshToken: string,
+    ) {
         await authRepository.deleteRefreshToken(
             db,
-            refreshToken
+            refreshToken,
         );
 
         return {
@@ -188,31 +215,95 @@ export class AuthService {
         };
     }
 
-    // Return the authentiated user's profile.
+    // Get the authenticated user.
     async me(userId: string) {
-        const user = await authRepository.findUserById(userId);
+        const result = await authRepository.findUserById(
+            userId,
+        );
 
-        if (!user) {
+        if (!result) {
             throw new Error("User not found.");
         }
 
-        return toUserResponse(user);
+        return toUserResponse(result);
     }
 
-    // Find a user by ID.
+    // Update the authenticated user's profile.
+    async updateMe(
+        userId: string,
+        data: {
+            email?: string | null;
+        },
+    ) {
+        const result = await authRepository.findUserById(userId);
+
+        if (!result) {
+            throw new Error("User not found.");
+        }
+
+        const currentUser = result.user;
+
+        let email: string | null | undefined;
+
+        if (data.email !== undefined) {
+            email = data.email?.trim().toLowerCase() || null;
+
+            if (email) {
+                const existingUser = await authRepository.findUserByEmail(email);
+
+                if (
+                    existingUser &&
+                    existingUser.id !== userId
+                ) {
+                    throw new Error(
+                        "Email address is already in use.",
+                    );
+                }
+            }
+        }
+
+        const updatedUser = await authRepository.updateUserEmail(
+            db,
+            userId,
+            email ?? currentUser.email ?? null,
+        );
+
+        if (!updatedUser) {
+            throw new Error(
+                "Unable to update profile.",
+            );
+        }
+
+        const updatedProfile = await authRepository.findUserById(userId);
+
+        if (!updatedProfile) {
+            throw new Error(
+                "Unable to load updated profile.",
+            );
+        }
+
+        return toUserResponse(updatedProfile);
+    }
+
     async findUserById(id: string) {
-        return authRepository.findUserById(id);
+        return authRepository.findUserById(
+            id,
+        );
     }
 
-    // Find a user by phone number.
-    async findUserByPhone(phone: string) {
-        return authRepository.findUserByPhone(phone);
+    async findUserByPhone(
+        phone: string,
+    ) {
+        return authRepository.findUserByPhone(
+            phone,
+        );
     }
 
-    // Find a user by referral code.
-    async findUserByReferralCode(referralCode: string) {
+    async findUserByReferralCode(
+        referralCode: string,
+    ) {
         return authRepository.findUserByReferralCode(
-            referralCode
+            referralCode,
         );
     }
 }

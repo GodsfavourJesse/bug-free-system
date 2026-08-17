@@ -52,4 +52,10 @@ router.get(
     authController.me
 );
 
+router.patch(
+    "/me",
+    authenticate,
+    authController.updateMe
+);
+
 export default router;

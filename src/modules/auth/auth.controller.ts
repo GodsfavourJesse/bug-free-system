@@ -150,6 +150,28 @@ class AuthController {
             next(error);
         }
     }
+
+    // Update Current Authenticated User
+    async updateMe(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            const user = await authService.updateMe(
+                req.user.id,
+                req.body,
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: "Profile updated successfully.",
+                data: user,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export const authController = new AuthController();

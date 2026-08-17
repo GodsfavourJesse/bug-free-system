@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../database";
 import {
+    membershipPlans,
     refreshTokens,
     users,
 } from "../../database/schema";
@@ -8,11 +9,9 @@ import { DbExecutor } from "../../database/types/types";
 
 export class AuthRepository {
 
-    /**
-     * ===========================
-     * Users
-     * ===========================
-     */
+    // ===========================
+    // Users
+    // ===========================
 
     // Find a user by ID.
     async findUserById(
@@ -20,15 +19,25 @@ export class AuthRepository {
         executor: DbExecutor = db,
     ) {
         const result = await executor
-            .select()
+            .select({
+                user: users,
+                membership: membershipPlans,
+            })
             .from(users)
+            .leftJoin(
+                membershipPlans,
+                eq(
+                    users.membershipPlanId,
+                    membershipPlans.id,
+                ),
+            )
             .where(eq(users.id, id))
             .limit(1);
 
         return result[0] ?? null;
     }
 
-// Find a user by phone number.
+    // Find a user by phone number.
     async findUserByPhone(
         phone: string,
         executor: DbExecutor = db,
@@ -54,6 +63,24 @@ export class AuthRepository {
             .limit(1);
 
         return result[0] ?? null;
+    }
+
+    // Update a user's email address.
+    async updateUserEmail(
+        executor: DbExecutor = db,
+        userId: string,
+        email: string | null,
+    ) {
+        const [user] = await executor
+            .update(users)
+            .set({
+                email,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.id, userId))
+            .returning();
+
+        return user ?? null;
     }
 
     // Find a user by referral code.
@@ -196,11 +223,9 @@ export class AuthRepository {
         return result.length;
     }
 
-    /**
-     * ===========================
-     * Refresh Tokens
-     * ===========================
-     */
+    // ===========================
+    // Refresh Tokens
+    // ===========================
 
     // Save a refresh token.
     async saveRefreshToken(
