@@ -108,6 +108,29 @@ export class AdminWalletService {
         };
     }
 
+    // Debit an already-locked admin wallet.
+    //
+    // IMPORTANT:
+    // The wallet must already have been locked
+    // with lockWallet() in the same transaction.
+    //
+    // This method does NOT:
+    // - lock the wallet
+    // - check the balance
+    // - create a transaction
+    // - credit the user
+    async debitLockedWallet(
+        executor: DbExecutor,
+        walletId: string,
+        balanceAfter: string,
+    ) {
+        return adminWalletRepository.updateAvailableBalance(
+            executor,
+            walletId,
+            balanceAfter,
+        );
+    }
+
     // Credit the admin wallet.
     async credit(
         executor: DbExecutor,

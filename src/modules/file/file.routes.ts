@@ -19,6 +19,31 @@ router.post(
     ),
 );
 
+// router.post(
+//     "/share-logo",
+//     upload.single("file"),
+//     fileController.uploadShareLogo.bind(
+//         fileController,
+//     ),
+// );
+
+router.post(
+    "/share-logo",
+    upload.single("file"),
+    (req, res, next) => {
+        console.log("========== SHARE LOGO UPLOAD ==========");
+        console.log("req.file:", req.file);
+        console.log("req.body:", req.body);
+        console.log("content-type:", req.headers["content-type"]);
+        console.log("========================================");
+
+        next();
+    },
+    fileController.uploadShareLogo.bind(
+        fileController,
+    ),
+);
+
 // Delete a file.
 router.delete(
     "/",

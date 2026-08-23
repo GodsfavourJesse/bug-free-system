@@ -11,6 +11,8 @@ import orderRoutes from "../modules/order/order.routes";
 import withdrawalRoutes from "../modules/withdrawal/withdrawal.routes";
 import completedAdvertisementRoutes from "../modules/completed-advertisement/completedAdvertisement.routes";
 import depositRoutes from "../modules/deposit/deposit.routes";
+import shareRoutes from "../modules/share/share.routes";
+
 
 import adminDashboardRoutes from "../modules/admin/dashboard/dashboard.routes";
 import adminUpgradeRoutes from "../modules/admin/upgrade/adminUpgrade.routes";
@@ -21,8 +23,11 @@ import adminDailyOrderConfigRoutes from "../modules/admin/daily-order-config/dai
 import adminAdvertisementRoutes from "../modules/admin/advertisement/advertisement.routes";
 import adminDepositRoutes from "../modules/admin/admin-deposit/adminDeposit.routes";
 import adminWalletRoutes from "../modules/admin/admin-wallet/adminWallet.routes";
+import adminShareRoutes from "../modules/admin/admin-share/adminShare.routes";
 
 const router = Router();
+
+// USER
 
 router.use(
     "/auth",
@@ -48,7 +53,6 @@ router.use(
     "/upgrade-requests",
     upgradeRoutes
 );
-
 
 router.use(
     "/files",
@@ -83,6 +87,11 @@ router.use(
 router.use(
     "/deposits",
     depositRoutes,
+);
+
+router.use(
+    "/shares",
+    shareRoutes,
 );
 
 
@@ -131,6 +140,11 @@ router.use(
 router.use(
     "/admin/deposits",
     adminDepositRoutes,
+);
+
+router.use(
+    "/admin/shares",
+    adminShareRoutes,
 );
 
 export default router;

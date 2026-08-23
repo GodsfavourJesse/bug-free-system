@@ -98,6 +98,77 @@ export class FileService {
 
         return publicId;
     }
+
+    async uploadShareLogo(
+        file: Express.Multer.File,
+    ): Promise<UploadedFileDto> {
+
+        fileValidation.ensureFileExists(
+            file,
+        );
+
+        fileValidation.validateFileSize(
+            file.size,
+        );
+
+        fileValidation.validateMimeType(
+            file.mimetype,
+        );
+
+        fileValidation.ensureImage(
+            file.mimetype,
+        );
+
+        try {
+
+            const result =
+                await cloudinary.uploader.upload(
+                    file.path,
+                    {
+                        folder:
+                            UploadFolders.SHARES,
+
+                        resource_type:
+                            "image",
+                    },
+                );
+
+            return {
+                publicId:
+                    result.public_id,
+
+                url:
+                    result.secure_url,
+
+                originalName:
+                    file.originalname,
+
+                mimeType:
+                    file.mimetype,
+
+                size:
+                    result.bytes,
+
+                format:
+                    result.format,
+
+                width:
+                    result.width,
+
+                height:
+                    result.height,
+
+                folder:
+                    UploadFolders.SHARES,
+            };
+
+        } finally {
+
+            await fs.unlink(
+                file.path,
+            ).catch(() => {});
+        }
+    }
 }
 
 export const fileService =

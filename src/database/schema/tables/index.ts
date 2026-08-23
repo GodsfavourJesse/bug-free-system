@@ -13,3 +13,5 @@ export * from "./advertisements";
 export * from "./completedAdvertisement";
 export * from "./deposits";
 export * from "./admin-wallet-transactions";
+export * from "./shares";
+export * from "./sharePurchases";

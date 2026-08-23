@@ -11,6 +11,9 @@ export enum TransactionType {
     TRANSFER = "transfer",
     ADJUSTMENT = "adjustment",
 
+    SHARE_PURCHASE = "share_purchase",
+    SHARE_RETURN = "share_return",
+
     // Daily task reward.
     ORDER_REWARD = "order_reward",
 

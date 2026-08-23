@@ -67,6 +67,27 @@ export class FileController {
             message: "File deleted successfully.",
         });
     }
+
+    async uploadShareLogo(
+        req: Request,
+        res: Response,
+    ) {
+        const file =
+            fileValidation.ensureFileExists(
+                req.file,
+            );
+
+        const result =
+            await fileService.uploadShareLogo(
+                file,
+            );
+
+        return res.status(201).json({
+            success: true,
+            message: "Share logo uploaded successfully.",
+            data: result,
+        });
+    }
 }
 
 export const fileController = new FileController();

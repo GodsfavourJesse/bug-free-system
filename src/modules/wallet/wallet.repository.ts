@@ -110,6 +110,27 @@ export class WalletRepository {
 
         return wallet ?? null;
     }
+
+    async debitAvailableBalance(
+        executor: DbExecutor,
+        walletId: string,
+        balance: string,
+    ) {
+        const [wallet] = await executor
+            .update(wallets)
+            .set({
+                availableBalance: balance,
+            })
+            .where(
+                eq(
+                    wallets.id,
+                    walletId,
+                ),
+            )
+            .returning();
+
+        return wallet;
+    }
 }
 
 export const walletRepository =

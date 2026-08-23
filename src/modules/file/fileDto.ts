@@ -22,6 +22,9 @@ export const UploadFolders = {
     // Verification module
     KYC: "kyc",
 
+    // Share module
+    SHARES: "shares",
+
     // General documents
     DOCUMENTS: "documents",
 } as const;

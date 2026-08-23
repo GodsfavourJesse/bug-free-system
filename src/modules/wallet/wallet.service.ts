@@ -137,6 +137,33 @@ export class WalletService {
         );
     }
 
+    // Credit an already-locked user wallet.
+    //
+    // IMPORTANT:
+    // The wallet must already have been locked
+    // with lockByUserId() in the same transaction.
+    //
+    // This method does NOT:
+    // - lock the wallet
+    // - create a transaction
+    // - modify totalEarned
+    // - modify totalDeposited
+    // - modify totalWithdrawn
+    async creditLockedWallet(
+        executor: DbExecutor,
+        walletId: string,
+        balanceAfter: string,
+    ) {
+        return walletRepository.updateBalances(
+            executor,
+            walletId,
+            {
+                availableBalance:
+                    balanceAfter,
+            },
+        );
+    }
+
     // Credit commission.
     async credit(
         executor: DbExecutor,
@@ -276,6 +303,18 @@ export class WalletService {
                         available - amount,
                     ),
             },
+        );
+    }
+
+    async debitLockedWallet(
+        executor: DbExecutor,
+        walletId: string,
+        balanceAfter: string,
+    ) {
+        return walletRepository.debitAvailableBalance(
+            executor,
+            walletId,
+            balanceAfter,
         );
     }
 

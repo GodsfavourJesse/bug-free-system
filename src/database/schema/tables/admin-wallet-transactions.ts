@@ -37,7 +37,7 @@ export const adminWalletTransactions =
             amount: decimal(
                 "amount",
                 {
-                    precision: 12,
+                    precision: 18,
                     scale: 2,
                 }
             )
@@ -46,7 +46,7 @@ export const adminWalletTransactions =
             balanceBefore: decimal(
                 "balance_before",
                 {
-                    precision: 12,
+                    precision: 18,
                     scale: 2,
                 }
             )
@@ -55,7 +55,7 @@ export const adminWalletTransactions =
             balanceAfter: decimal(
                 "balance_after",
                 {
-                    precision: 12,
+                    precision: 18,
                     scale: 2,
                 }
             )
