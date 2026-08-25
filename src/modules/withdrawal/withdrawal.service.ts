@@ -1,12 +1,6 @@
 import { withdrawalRepository } from "./withdrawal.repository";
 import { withdrawalValidation } from "./withdrawal.validation";
-
-import {
-    ApproveWithdrawalDto,
-    CreateWithdrawalDto,
-    MarkWithdrawalPaidDto,
-    RejectWithdrawalDto,
-} from "./withdrawal.dto";
+import { ApproveWithdrawalDto, CreateWithdrawalDto, MarkWithdrawalPaidDto, RejectWithdrawalDto } from "./withdrawal.dto";
 import { transactionService } from "../transaction/transaction.service";
 import { withTransaction } from "../../database/transaction/transaction";
 import { walletService } from "../wallet/wallet.service";
@@ -17,6 +11,7 @@ import { DbExecutor } from "../../database/types/types";
 import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
 import { adminWalletService } from "../admin/admin-wallet/adminWallet.service";
 import { adminWalletTransactionService } from "../admin/admin-wallet/admin-wallet-transaction/adminWalletTransaction.sevice";
+import { AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
 
 export class WithdrawalService {
 
@@ -399,16 +394,11 @@ export class WithdrawalService {
                     {
                         adminId: adminWallet.userId,
 
-                        type:
-                            TransactionType.ADMIN_WITHDRAWAL,
+                        type: AdminWalletTransactionType.WITHDRAWAL,
 
-                        amount:
-                            amount.toFixed(2),
+                        amount: amount.toFixed(2),
 
-                        balanceBefore:
-                            adminWallet.balanceBefore.toFixed(
-                                2,
-                            ),
+                        balanceBefore: adminWallet.balanceBefore.toFixed(2),
 
                         balanceAfter:
                             adminWallet.balanceAfter.toFixed(
