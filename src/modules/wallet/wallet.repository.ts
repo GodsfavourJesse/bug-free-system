@@ -131,6 +131,30 @@ export class WalletRepository {
 
         return wallet;
     }
+
+    async completeHeldPayment(
+        executor: DbExecutor,
+        walletId: string,
+        availableBalance: string,
+        heldBalance: string,
+    ) {
+        const [wallet] =
+            await executor
+                .update(wallets)
+                .set({
+                    availableBalance,
+                    heldBalance,
+                })
+                .where(
+                    eq(
+                        wallets.id,
+                        walletId,
+                    ),
+                )
+                .returning();
+
+        return wallet;
+    }
 }
 
 export const walletRepository =

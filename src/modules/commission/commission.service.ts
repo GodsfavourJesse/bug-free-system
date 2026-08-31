@@ -147,7 +147,7 @@ export class CommissionService {
         }
 
         const reward =
-            await rewardEngineService.creditReward(
+            await rewardEngineService.creditFundedReward(
                 executor,
                 {
                     userId:

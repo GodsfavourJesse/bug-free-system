@@ -1,7 +1,4 @@
-import {
-    ReferralNotFoundError,
-    ReferrerNotFoundError,
-} from "./referral.errors";
+import { ReferralNotFoundError, ReferrerNotFoundError}  from "./referral.errors";
 
 export class ReferralValidation {
 
@@ -30,5 +27,4 @@ export class ReferralValidation {
     }
 }
 
-export const referralValidation =
-    new ReferralValidation();
+export const referralValidation = new ReferralValidation();

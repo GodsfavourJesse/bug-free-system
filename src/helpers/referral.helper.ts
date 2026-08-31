@@ -6,7 +6,7 @@ export async function generateReferralCode(): Promise<string> {
     while (true) {
 
         const code =
-            "NX-" +
+            "WC-" +
             randomBytes(4)
                 .toString("hex")
                 .toUpperCase();

@@ -384,7 +384,6 @@ export class AdminDepositService {
     ) {
 
         await transactionService.createSystemTransaction(
-            executor,
             {
                 userId: deposit.userId,
 
@@ -424,6 +423,7 @@ export class AdminDepositService {
                         deposit.reference,
                 },
             },
+            executor,
         );
 
     }

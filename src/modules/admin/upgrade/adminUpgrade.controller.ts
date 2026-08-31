@@ -68,7 +68,7 @@ export class AdminUpgradeController {
         const request = await adminUpgradeService.approve(
             req.params.id as string,
             req.user!.id,
-            req.body.adminNote,
+            req.body?.adminNote,
         );
 
         return res.json({
@@ -87,8 +87,8 @@ export class AdminUpgradeController {
         const request = await adminUpgradeService.reject(
             req.params.id as string,
             req.user!.id,
-            req.body.rejectedReason,
-            req.body.adminNote,
+            req.body?.rejectedReason,
+            req.body?.adminNote,
         );
 
         return res.json({

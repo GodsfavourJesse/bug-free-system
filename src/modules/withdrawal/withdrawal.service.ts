@@ -124,10 +124,10 @@ export class WithdrawalService {
 
                 // Create Pending Transaction
                 await transactionService.createSystemTransaction(
-                    tx,
                     {
                         userId: dto.userId,
                         walletId: wallet.id,
+                        withdrawId: withdrawal.id,
                         type: TransactionType.WITHDRAWAL,
                         amount: dto.amount,
                         balanceBefore: balanceBefore.toFixed(
@@ -144,6 +144,7 @@ export class WithdrawalService {
                             withdrawalId: withdrawal.id,
                         },
                     },
+                    tx,
                 );
 
                 // Notify Admin
@@ -334,7 +335,7 @@ export class WithdrawalService {
         return withTransaction(
             async (tx) => {
 
-                // Lock withdrawal
+                // 1. Lock withdrawal
                 const withdrawal =
                     await withdrawalRepository.lockById(
                         tx,
@@ -345,6 +346,7 @@ export class WithdrawalService {
                     withdrawal,
                 );
 
+                // 2. Withdrawal must be approved
                 withdrawalValidation.ensureApproved(
                     withdrawal,
                 );
@@ -353,75 +355,84 @@ export class WithdrawalService {
                     withdrawal.amount,
                 );
 
-                // Remove funds from held balance
+                // 3. Remove user's held funds
                 await walletService.decreaseHeldBalance(
                     tx,
                     withdrawal.userId,
                     amount,
                 );
 
-                // Increase user's lifetime withdrawn amount
+                // 4. Increase user's lifetime withdrawal total
                 await walletService.increaseWithdrawn(
                     tx,
                     withdrawal.userId,
                     amount,
                 );
 
-                // Debit admin wallet
+                // 5. Debit admin wallet
                 const adminWallet =
                     await adminWalletService.debit(
                         tx,
                         amount,
                     );
 
-                // Mark withdrawal as paid
+                // 6. Mark withdrawal as paid
                 const paid =
                     await withdrawalRepository.markPaid(
                         tx,
                         withdrawal.id,
                     );
 
-                // Complete user's pending withdrawal transaction
+                // 7. Complete existing withdrawal transaction
                 await transactionService.updateTransactionStatusByWithdrawalId(
                     tx,
                     paid.id,
                     TransactionStatus.COMPLETED,
                 );
 
-                // Record admin wallet transaction
+                // 8. Record admin wallet transaction
                 await adminWalletTransactionService.createTransaction(
                     tx,
                     {
-                        adminId: adminWallet.userId,
+                        adminId:
+                            adminWallet.userId,
 
-                        type: AdminWalletTransactionType.WITHDRAWAL,
+                        type:
+                            AdminWalletTransactionType.WITHDRAWAL,
 
-                        amount: amount.toFixed(2),
+                        amount:
+                            amount.toFixed(2),
 
-                        balanceBefore: adminWallet.balanceBefore.toFixed(2),
+                        balanceBefore:
+                            adminWallet.balanceBefore.toFixed(2),
 
                         balanceAfter:
-                            adminWallet.balanceAfter.toFixed(
-                                2,
-                            ),
+                            adminWallet.balanceAfter.toFixed(2),
 
                         description:
                             "Withdrawal payment",
 
                         metadata: {
-                            withdrawalId: paid.id,
-                            userId: paid.userId,
+                            withdrawalId:
+                                paid.id,
+
+                            userId:
+                                paid.userId,
+
+                            amount:
+                                amount.toFixed(2),
                         },
                     },
                 );
 
-                // Notify user
+                // 9. Notify user
                 await notificationService.notifyUser(
                     tx,
                     {
                         userId: paid.userId,
 
-                        title: "Withdrawal Paid",
+                        title:
+                            "Withdrawal Paid",
 
                         message:
                             `₦${amount.toLocaleString(
@@ -432,8 +443,11 @@ export class WithdrawalService {
                             NotificationType.WITHDRAWAL,
 
                         metadata: {
-                            withdrawalId: paid.id,
-                            amount: paid.amount,
+                            withdrawalId:
+                                paid.id,
+
+                            amount:
+                                paid.amount,
                         },
                     },
                 );
@@ -474,10 +488,10 @@ export class WithdrawalService {
         }
 
         await transactionService.createSystemTransaction(
-            executor,
             {
                 userId: withdrawal.userId,
                 walletId: withdrawal.walletId,
+                withdrawId: withdrawal.id,
                 amount: withdrawal.amount,
                 balanceBefore: balanceBefore.toFixed(2),
                 balanceAfter: balanceAfter.toFixed(2),
@@ -489,6 +503,7 @@ export class WithdrawalService {
                     withdrawalId: withdrawal.id,
                 },
             },
+            executor,
         );
     }
 

@@ -3,6 +3,7 @@ import { referralValidation } from "./referral.validation";
 import { userRepository } from "../user/user.repository";
 import { ReferralTreeNode } from "./referral.dto";
 import { db } from "../../database";
+import { env } from "../../config";
 
 export class ReferralService {
 
@@ -157,56 +158,14 @@ export class ReferralService {
     }
 
     // Return referral statistics.
+    // The repository performs the complete calculation using one PostgreSQL recursive CTE.
     async getReferralStats(
         userId: string,
     ) {
-
-        const [
-            direct,
-            level1,
-            level2,
-            level3,
-            team,
-        ] = await Promise.all([
-
-            this.countDirect(
-                userId,
-            ),
-
-            this.getLevel1(
-                userId,
-            ),
-
-            this.getLevel2(
-                userId,
-            ),
-
-            this.getLevel3(
-                userId,
-            ),
-
-            this.countTeam(
-                userId,
-            ),
-        ]);
-
-        return {
-
-            directReferrals:
-                direct,
-
-            level1:
-                level1.length,
-
-            level2:
-                level2.length,
-
-            level3:
-                level3.length,
-
-            totalTeam:
-                team,
-        };
+        return referralRepository.getReferralStats(
+            db,
+            userId,
+        );
     }
 
     // Generate the authenticated user's referral link.
@@ -214,25 +173,22 @@ export class ReferralService {
         userId: string,
     ) {
 
-        const user =
-            await userRepository.findById(
-                db,
-                userId,
-            );
+        const user = await userRepository.findById(
+            db,
+            userId,
+        );
 
         referralValidation.ensureReferrerExists(
             user,
         );
 
         return {
-            referralCode:
-                user.referralCode,
+            referralCode: user.referralCode,
 
             referralLink:
-                `${process.env.CLIENT_URL}/register?ref=${user.referralCode}`,
+                `${env.client.referralBaseUrl}/register?ref=${user.referralCode}`,
         };
     }
 }
 
-export const referralService =
-    new ReferralService();
+export const referralService = new ReferralService();

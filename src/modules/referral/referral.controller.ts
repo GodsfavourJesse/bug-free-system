@@ -114,5 +114,4 @@ export class ReferralController {
     }
 }
 
-export const referralController =
-    new ReferralController();
+export const referralController = new ReferralController();

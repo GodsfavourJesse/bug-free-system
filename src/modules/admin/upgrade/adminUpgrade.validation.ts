@@ -19,5 +19,4 @@ export class AdminUpgradeValidation {
     }
 }
 
-export const adminUpgradeValidation =
-    new AdminUpgradeValidation();
+export const adminUpgradeValidation =  new AdminUpgradeValidation();

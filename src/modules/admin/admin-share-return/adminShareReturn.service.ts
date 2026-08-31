@@ -283,7 +283,6 @@ export class AdminShareReturnService {
         // Create the user's return transaction.
         const userTransaction =
             await transactionService.createSystemTransaction(
-                executor,
                 {
                     userId: userCredit.userId,
                     walletId: userCredit.walletId,
@@ -305,6 +304,7 @@ export class AdminShareReturnService {
                         returnReference: data.returnReference,
                     },
                 },
+                executor,
             );
 
         // Create the admin wallet debit transaction.

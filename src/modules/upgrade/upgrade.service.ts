@@ -1,26 +1,71 @@
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
 
-import { membershipPlanRepository } from "../membership-plan/membershipPlan.repository";
-import { membershipPlanValidation } from "../membership-plan/membershipPlan.validation";
+import {
+    membershipPlanRepository,
+} from "../membership-plan/membershipPlan.repository";
 
-import { upgradeRepository } from "./upgrade.repository";
-import { upgradeValidation } from "./upgrade.validation";
+import {
+    membershipPlanValidation,
+} from "../membership-plan/membershipPlan.validation";
 
-import { CreateUpgradeRequestDto } from "./upgradeDto";
-import { UpgradeAlreadyProcessedError } from "./upgrade.errors";
-import { notificationService } from "../notification/notification.service";
-import { withTransaction } from "../../database/transaction/transaction";
-import { users } from "../../database/schema";
-import { UpgradeRequestStatus } from "../../database/enums/upgrade.enum";
-import { NotificationType } from "../../database/enums/notification.enum";
+import {
+    upgradeRepository,
+} from "./upgrade.repository";
+
+import {
+    upgradeValidation,
+} from "./upgrade.validation";
+
+import {
+    CreateUpgradeRequestDto,
+} from "./upgradeDto";
+
+import {
+    UpgradeAlreadyProcessedError,
+} from "./upgrade.errors";
+
+import {
+    notificationService,
+} from "../notification/notification.service";
+
+import {
+    withTransaction,
+} from "../../database/transaction/transaction";
+
+import {
+    users,
+} from "../../database/schema";
+
+import {
+    UpgradeRequestStatus,
+} from "../../database/enums/upgrade.enum";
+
+import {
+    NotificationType,
+} from "../../database/enums/notification.enum";
+
+import {
+    TransactionStatus,
+    TransactionType,
+} from "../../database/enums/transaction.enum";
+
 import { db } from "../../database";
-import { walletService } from "../wallet/wallet.service";
+
+import {
+    walletService,
+} from "../wallet/wallet.service";
+
+import {
+    transactionService,
+} from "../transaction/transaction.service";
 
 
 export class UpgradeService {
 
-    // Generate a unique upgrade reference.
+    /**
+     * Generate a unique upgrade reference.
+     */
     private generateReference() {
         return `UPG-${Date.now()}-${crypto
             .randomBytes(4)
@@ -28,183 +73,537 @@ export class UpgradeService {
             .toUpperCase()}`;
     }
 
-    // Create a new upgrade request.
+    /**
+     * Create a new upgrade request.
+     *
+     * IMPORTANT:
+     *
+     * The money is NOT spent here.
+     *
+     * It is moved:
+     *
+     * AVAILABLE -> HELD
+     *
+     * This protects the money while the
+     * admin reviews the request.
+     */
     async requestUpgrade(
         userId: string,
         dto: CreateUpgradeRequestDto,
     ) {
-        return withTransaction(async (tx) => {
+        return withTransaction(
+            async (tx) => {
 
-            // Validate payment method.
-            upgradeValidation.validatePaymentMethod(
-                dto.paymentMethod,
-            );
+                // ------------------------------------------------
+                // 1. Validate payment method.
+                // ------------------------------------------------
 
-            // Find authenticated user.
-            const [user] = await tx
-                .select()
-                .from(users)
-                .where(eq(users.id, userId))
-                .limit(1);
-
-            if (!user) {
-                throw new Error("User not found.");
-            }
-
-            if (!user.membershipPlanId) {
-                throw new Error(
-                    "User has no membership plan.",
+                upgradeValidation.validatePaymentMethod(
+                    dto.paymentMethod,
                 );
-            }
 
-            // Find the user's current membership plan.
-            const currentPlan =
-                membershipPlanValidation.ensureMembershipPlanExists(
-                    await membershipPlanRepository.findById(
+                // ------------------------------------------------
+                // 2. Find authenticated user.
+                // ------------------------------------------------
+
+                const [user] =
+                    await tx
+                        .select()
+                        .from(users)
+                        .where(
+                            eq(
+                                users.id,
+                                userId,
+                            ),
+                        )
+                        .limit(1);
+
+                if (!user) {
+                    throw new Error(
+                        "User not found.",
+                    );
+                }
+
+                if (!user.membershipPlanId) {
+                    throw new Error(
+                        "User has no membership plan.",
+                    );
+                }
+
+                // ------------------------------------------------
+                // 3. Current membership.
+                // ------------------------------------------------
+
+                const currentPlan =
+                    membershipPlanValidation
+                        .ensureMembershipPlanExists(
+                            await membershipPlanRepository.findById(
+                                tx,
+                                user.membershipPlanId,
+                            ),
+                        );
+
+                // ------------------------------------------------
+                // 4. Requested membership.
+                // ------------------------------------------------
+
+                const requestedPlan =
+                    membershipPlanValidation
+                        .ensureMembershipPlanExists(
+                            await membershipPlanRepository.findById(
+                                tx,
+                                dto.requestedMembershipPlanId,
+                            ),
+                        );
+
+                // ------------------------------------------------
+                // 5. Highest membership.
+                // ------------------------------------------------
+
+                const highestPlan =
+                    membershipPlanValidation
+                        .ensureMembershipPlanExists(
+                            await membershipPlanRepository.findHighest(
+                                tx,
+                            ),
+                        );
+
+                membershipPlanValidation
+                    .ensureNotHighestPlan(
+                        currentPlan,
+                        highestPlan,
+                    );
+
+                // ------------------------------------------------
+                // 6. Validate upgrade direction.
+                // ------------------------------------------------
+
+                membershipPlanValidation
+                    .ensureUpgradeable(
+                        currentPlan,
+                        requestedPlan,
+                    );
+
+                // ------------------------------------------------
+                // 7. Enforce sequential upgrades.
+                // ------------------------------------------------
+
+                membershipPlanValidation
+                    .ensurePlanSequence(
+                        currentPlan,
+                        requestedPlan,
+                    );
+
+                // ------------------------------------------------
+                // 8. Ensure no existing request.
+                // ------------------------------------------------
+
+                const requests =
+                    await upgradeRepository.findByUser(
                         tx,
-                        user.membershipPlanId,
-                    ),
-                );
+                        userId,
+                    );
 
-            // Find the requested membership plan.
-            const requestedPlan =
-                membershipPlanValidation.ensureMembershipPlanExists(
-                    await membershipPlanRepository.findById(
+                const pendingRequest =
+                    requests.find(
+                        (request) =>
+                            request.status ===
+                                UpgradeRequestStatus.PENDING ||
+                            request.status ===
+                                UpgradeRequestStatus.UNDER_REVIEW,
+                    );
+
+                upgradeValidation
+                    .ensureNoPendingRequest(
+                        pendingRequest,
+                    );
+
+                // ------------------------------------------------
+                // 9. Lock the user's wallet.
+                // ------------------------------------------------
+
+                const wallet =
+                    await walletService.lockByUserId(
                         tx,
-                        dto.requestedMembershipPlanId,
-                    ),
-                );
+                        userId,
+                    );
 
-            // Ensure the user isn't already on the highest plan.
-            const highestPlan =
-                membershipPlanValidation.ensureMembershipPlanExists(
-                    await membershipPlanRepository.findHighest(
+                const amount =
+                    Number(
+                        requestedPlan.upgradePrice,
+                    );
+
+                // ------------------------------------------------
+                // 10. Verify available balance.
+                // ------------------------------------------------
+
+                const availableBefore =
+                    Number(
+                        wallet.availableBalance,
+                    );
+
+                if (
+                    availableBefore <
+                    amount
+                ) {
+                    throw new Error(
+                        "Insufficient wallet balance for this upgrade.",
+                    );
+                }
+
+                // ------------------------------------------------
+                // 11. Generate reference.
+                // ------------------------------------------------
+
+                const reference =
+                    this.generateReference();
+
+                // ------------------------------------------------
+                // 12. Create upgrade request.
+                // ------------------------------------------------
+
+                const request =
+                    await upgradeRepository.create(
                         tx,
-                    ),
-                );
+                        {
+                            userId,
 
-            membershipPlanValidation.ensureNotHighestPlan(
-                currentPlan,
-                highestPlan,
-            );
+                            currentMembershipPlanId:
+                                currentPlan.id,
 
-            // Ensure the requested plan can be upgraded to.
-            membershipPlanValidation.ensureUpgradeable(
-                currentPlan,
-                requestedPlan,
-            );
+                            requestedMembershipPlanId:
+                                requestedPlan.id,
 
-            // Ensure upgrades happen sequentially.
-            membershipPlanValidation.ensurePlanSequence(
-                currentPlan,
-                requestedPlan,
-            );
+                            amount:
+                                requestedPlan.upgradePrice,
 
-            // Ensure the user has no pending request.
-            const requests =
-                await upgradeRepository.findByUser(
+                            paymentMethod:
+                                dto.paymentMethod,
+
+                            paymentProof:
+                                dto.paymentProof,
+
+                            status:
+                                UpgradeRequestStatus.PENDING,
+
+                            reference,
+
+                            metadata:
+                                dto.metadata,
+                        },
+                    );
+
+                // ------------------------------------------------
+                // 13. HOLD the money.
+                //
+                // AVAILABLE -> HELD
+                // ------------------------------------------------
+
+                await walletService.holdBalance(
                     tx,
                     userId,
+                    amount,
                 );
 
-            const pendingRequest =
-                requests.find(
-                    (request) =>
-                        request.status ===
-                            UpgradeRequestStatus.PENDING ||
-                        request.status ===
-                            UpgradeRequestStatus.UNDER_REVIEW,
+                const availableAfter =
+                    availableBefore -
+                    amount;
+
+                const heldAfter =
+                    Number(
+                        wallet.heldBalance,
+                    ) + amount;
+
+                // ------------------------------------------------
+                // 14. Record HOLD transaction.
+                // ------------------------------------------------
+
+                await transactionService
+                    .createSystemTransaction(
+                        {
+                            userId,
+
+                            walletId:
+                                wallet.id,
+
+                            amount:
+                                amount.toFixed(2),
+
+                            balanceBefore:
+                                availableBefore.toFixed(2),
+
+                            balanceAfter:
+                                availableAfter.toFixed(2),
+
+                            type:
+                                TransactionType.HOLD,
+
+                            status:
+                                TransactionStatus.COMPLETED,
+
+                            reference:
+                                `${reference}-HOLD`,
+
+                            description:
+                                `Funds held for membership upgrade to ${requestedPlan.name}.`,
+
+                            metadata: {
+                                direction:
+                                    "HOLD",
+
+                                upgradeRequestId:
+                                    request.id,
+
+                                upgradeReference:
+                                    reference,
+
+                                currentMembershipPlanId:
+                                    currentPlan.id,
+
+                                requestedMembershipPlanId:
+                                    requestedPlan.id,
+
+                                heldAmount:
+                                    amount,
+
+                                heldBalanceAfter:
+                                    heldAfter,
+                            },
+                        },
+                        tx,
+                    );
+
+                // ------------------------------------------------
+                // 15. Notify user.
+                // ------------------------------------------------
+
+                await notificationService.notifyUser(
+                    tx,
+                    {
+                        userId,
+
+                        title:
+                            "Upgrade Request Submitted",
+
+                        message:
+                            `Your upgrade request to ${requestedPlan.name} has been submitted. ₦${amount.toLocaleString(
+                                "en-NG",
+                                {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                },
+                            )} has been temporarily held from your wallet pending approval.`,
+
+                        type:
+                            NotificationType.UPGRADE,
+
+                        metadata: {
+                            upgradeRequestId:
+                                request.id,
+
+                            amount,
+
+                            requestedMembershipPlanId:
+                                requestedPlan.id,
+                        },
+                    },
                 );
 
-            upgradeValidation.ensureNoPendingRequest(
-                pendingRequest,
-            );
+                // ------------------------------------------------
+                // 16. Notify admins.
+                // ------------------------------------------------
 
-            // Create the upgrade request.
-            const request = await upgradeRepository.create(tx, {
-                userId,
+                await notificationService.notifyAdmins(
+                    tx,
+                    {
+                        title:
+                            "New Upgrade Request",
 
-                currentMembershipPlanId: currentPlan.id,
+                        message:
+                            `A new membership upgrade request has been submitted by ${user.phone}.`,
 
-                requestedMembershipPlanId: requestedPlan.id,
+                        type:
+                            NotificationType.UPGRADE,
 
-                amount: requestedPlan.upgradePrice,
+                        metadata: {
+                            upgradeRequestId:
+                                request.id,
 
-                paymentMethod: dto.paymentMethod,
+                            userId,
 
-                paymentProof: dto.paymentProof,
+                            amount,
 
-                status: UpgradeRequestStatus.PENDING,
+                            requestedMembershipPlanId:
+                                requestedPlan.id,
+                        },
+                    },
+                );
 
-                reference: this.generateReference(),
-
-                metadata: dto.metadata,
-            });
-
-            // Notify the user.
-            await notificationService.notifyUser(tx, {
-                userId,
-                title: "Upgrade Request Submitted",
-                message:
-                    "Your membership upgrade request has been submitted successfully and is awaiting review.",
-                type: NotificationType.UPGRADE,
-                metadata: {
-                    upgradeRequestId: request.id,
-                },
-            });
-
-            // Notify every admin.
-            await notificationService.notifyAdmins(tx, {
-                title: "New Upgrade Request",
-                message:
-                    `A new upgrade request has been submitted by ${user.phone}.`,
-                type: NotificationType.UPGRADE,
-                metadata: {
-                    upgradeRequestId: request.id,
-                },
-            });
-
-            return request;
-        });
+                return request;
+            },
+        );
     }
 
-    // Cancel a pending upgrade request.
+    /**
+     * Cancel a pending upgrade request.
+     *
+     * Cancellation releases:
+     *
+     * HELD -> AVAILABLE
+     */
     async cancelRequest(
         requestId: string,
         userId: string,
     ) {
-        return withTransaction(async (tx) => {
+        return withTransaction(
+            async (tx) => {
 
-            const request =
-                upgradeValidation.ensureUpgradeRequestExists(
-                    await upgradeRepository.findById(
+                const request =
+                    upgradeValidation
+                        .ensureUpgradeRequestExists(
+                            await upgradeRepository.findById(
+                                tx,
+                                requestId,
+                            ),
+                        );
+
+                // Ensure ownership.
+                upgradeValidation
+                    .ensureRequestBelongsToUser(
+                        request.userId,
+                        userId,
+                    );
+
+                // Only pending requests can be cancelled.
+                if (
+                    request.status !==
+                    UpgradeRequestStatus.PENDING
+                ) {
+                    throw new UpgradeAlreadyProcessedError();
+                }
+
+                const amount =
+                    Number(request.amount);
+
+                // Lock wallet.
+                const wallet =
+                    await walletService.lockByUserId(
                         tx,
-                        requestId,
-                    ),
+                        userId,
+                    );
+
+                const availableBefore =
+                    Number(
+                        wallet.availableBalance,
+                    );
+
+                // Release held funds.
+                await walletService.releaseHeldBalance(
+                    tx,
+                    userId,
+                    amount,
                 );
 
-            // Ensure the request belongs to the user.
-            upgradeValidation.ensureRequestBelongsToUser(
-                request.userId,
-                userId,
-            );
+                const availableAfter =
+                    availableBefore +
+                    amount;
 
-            // Only pending requests can be cancelled.
-            if (
-                request.status !==
-                UpgradeRequestStatus.PENDING
-            ) {
-                throw new UpgradeAlreadyProcessedError();
-            }
+                // Record release transaction.
+                await transactionService
+                    .createSystemTransaction(
+                        {
+                            userId,
 
-            return upgradeRepository.cancel(
-                tx,
-                request.id,
-            );
-        });
+                            walletId:
+                                wallet.id,
+
+                            amount:
+                                amount.toFixed(2),
+
+                            balanceBefore:
+                                availableBefore.toFixed(2),
+
+                            balanceAfter:
+                                availableAfter.toFixed(2),
+
+                            type:
+                                TransactionType.RELEASE,
+
+                            status:
+                                TransactionStatus.COMPLETED,
+
+                            reference:
+                                `${request.reference}-CANCEL`,
+
+                            description:
+                                "Upgrade request cancelled. Held funds released back to wallet.",
+
+                            metadata: {
+                                direction:
+                                    "RELEASE",
+
+                                upgradeRequestId:
+                                    request.id,
+
+                                upgradeReference:
+                                    request.reference,
+
+                                reason:
+                                    "user_cancelled",
+                            },
+                        },
+                        tx,
+                    );
+
+                const cancelledRequest =
+                    await upgradeRepository.cancel(
+                        tx,
+                        request.id,
+                    );
+
+                if (!cancelledRequest) {
+                    throw new Error(
+                        "Failed to cancel upgrade request.",
+                    );
+                }
+
+                await notificationService.notifyUser(
+                    tx,
+                    {
+                        userId,
+
+                        title:
+                            "Upgrade Request Cancelled",
+
+                        message:
+                            `Your upgrade request has been cancelled and ₦${amount.toLocaleString(
+                                "en-NG",
+                                {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                },
+                            )} has been released back to your available wallet balance.`,
+
+                        type:
+                            NotificationType.UPGRADE,
+
+                        metadata: {
+                            upgradeRequestId:
+                                request.id,
+
+                            amount,
+                        },
+                    },
+                );
+
+                return cancelledRequest;
+            },
+        );
     }
 
-    // Find a single upgrade request.
+    /**
+     * Find one upgrade request.
+     */
     async findById(
         id: string,
     ) {
@@ -214,12 +613,16 @@ export class UpgradeService {
                 id,
             );
 
-        return upgradeValidation.ensureUpgradeRequestExists(
-            request,
-        );
+        return upgradeValidation
+            .ensureUpgradeRequestExists(
+                request,
+            );
     }
 
-    // Return every upgrade request belonging to a user.
+    /**
+     * Return all upgrade requests belonging
+     * to a user.
+     */
     async findByUser(
         userId: string,
     ) {
@@ -229,26 +632,39 @@ export class UpgradeService {
         );
     }
 
-    // Return every pending upgrade request.
+    /**
+     * Return pending and under-review
+     * upgrade requests.
+     */
     async findPending() {
         return upgradeRepository.findPending(
             db,
         );
     }
 
+    /**
+     * Validate a potential upgrade.
+     */
     async validateUpgrade(
         userId: string,
         requestedMembershipPlanId: string,
     ) {
-        // Find authenticated user
-        const [user] = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, userId))
-            .limit(1);
+        const [user] =
+            await db
+                .select()
+                .from(users)
+                .where(
+                    eq(
+                        users.id,
+                        userId,
+                    ),
+                )
+                .limit(1);
 
         if (!user) {
-            throw new Error("User not found.");
+            throw new Error(
+                "User not found.",
+            );
         }
 
         if (!user.membershipPlanId) {
@@ -257,56 +673,53 @@ export class UpgradeService {
             );
         }
 
-        // Current membership
-        const currentPlan = membershipPlanValidation.ensureMembershipPlanExists(
-            await membershipPlanRepository.findById(
+        const currentPlan =
+            membershipPlanValidation
+                .ensureMembershipPlanExists(
+                    await membershipPlanRepository.findById(
+                        db,
+                        user.membershipPlanId,
+                    ),
+                );
+
+        const requestedPlan =
+            membershipPlanValidation
+                .ensureMembershipPlanExists(
+                    await membershipPlanRepository.findById(
+                        db,
+                        requestedMembershipPlanId,
+                    ),
+                );
+
+        const highestPlan =
+            membershipPlanValidation
+                .ensureMembershipPlanExists(
+                    await membershipPlanRepository.findHighest(
+                        db,
+                    ),
+                );
+
+        const wallet =
+            await walletService.findByUserId(
                 db,
-                user.membershipPlanId,
-            ),
-        );
-
-        // Requested membership
-        const requestedPlan = membershipPlanValidation.ensureMembershipPlanExists(
-            await membershipPlanRepository.findById(
-                db,
-                requestedMembershipPlanId,
-            ),
-        );
-
-        // Highest membership
-        const highestPlan = membershipPlanValidation.ensureMembershipPlanExists(
-            await membershipPlanRepository.findHighest(
-                db,
-            ),
-        );
-
-        // Wallet
-        const wallet = await walletService.findByUserId(
-            db,
-            userId,
-        );
-
-        if (!wallet) {
-            throw new Error(
-                "Wallet not found.",
+                userId,
             );
-        }
 
-        // Existing pending request
-        const requests = await upgradeRepository.findByUser(
-            db,
-            userId,
-        );
+        const requests =
+            await upgradeRepository.findByUser(
+                db,
+                userId,
+            );
 
-        const pendingRequest = requests.find(
-            (request) =>
-                request.status ===
-                    UpgradeRequestStatus.PENDING ||
-                request.status ===
-                    UpgradeRequestStatus.UNDER_REVIEW,
-        );
+        const pendingRequest =
+            requests.find(
+                (request) =>
+                    request.status ===
+                        UpgradeRequestStatus.PENDING ||
+                    request.status ===
+                        UpgradeRequestStatus.UNDER_REVIEW,
+            );
 
-        // Perform validations
         let validMembership = true;
         let sequentialUpgrade = true;
         let noPendingRequest = true;
@@ -317,7 +730,6 @@ export class UpgradeService {
             message: string;
         }[] = [];
 
-        // Already highest
         if (
             currentPlan.sortOrder >=
             highestPlan.sortOrder
@@ -325,12 +737,14 @@ export class UpgradeService {
             validMembership = false;
 
             failedChecks.push({
-                key: "highestMembership",
-                message: "You are already on the highest membership plan.",
+                key:
+                    "highestMembership",
+
+                message:
+                    "You are already on the highest membership plan.",
             });
         }
 
-        // Requested plan must be above current
         if (
             requestedPlan.sortOrder <=
             currentPlan.sortOrder
@@ -338,12 +752,14 @@ export class UpgradeService {
             sequentialUpgrade = false;
 
             failedChecks.push({
-                key: "upgradeDirection",
-                message: "You can only upgrade to a higher membership plan.",
+                key:
+                    "upgradeDirection",
+
+                message:
+                    "You can only upgrade to a higher membership plan.",
             });
         }
 
-        // Sequential upgrade
         if (
             requestedPlan.sortOrder >
                 currentPlan.sortOrder &&
@@ -353,51 +769,72 @@ export class UpgradeService {
             sequentialUpgrade = false;
 
             failedChecks.push({
-                key: "sequence",
-                message: "Membership upgrades must follow the next available plan.",
+                key:
+                    "sequence",
+
+                message:
+                    "Membership upgrades must follow the next available plan.",
             });
         }
 
-        // Plan must be active
         if (!requestedPlan.isActive) {
             validMembership = false;
 
             failedChecks.push({
-                key: "inactivePlan",
-                message: "This membership plan is currently inactive.",
+                key:
+                    "inactivePlan",
+
+                message:
+                    "This membership plan is currently inactive.",
             });
         }
 
-        // Plan must allow upgrades
         if (!requestedPlan.canUpgradeTo) {
             validMembership = false;
 
             failedChecks.push({
-                key: "upgradeDisabled",
-                message: "This membership plan cannot currently be upgraded to.",
+                key:
+                    "upgradeDisabled",
+
+                message:
+                    "This membership plan cannot currently be upgraded to.",
             });
         }
 
-        // Pending request
         if (pendingRequest) {
             noPendingRequest = false;
 
             failedChecks.push({
-                key: "pendingRequest",
-                message: "You already have a pending upgrade request.",
+                key:
+                    "pendingRequest",
+
+                message:
+                    "You already have a pending membership upgrade request.",
             });
         }
 
-        // Wallet balance
+        const requiredAmount =
+            Number(
+                requestedPlan.upgradePrice,
+            );
+
+        const availableBalance =
+            Number(
+                wallet.availableBalance,
+            );
+
         if (
-            Number(wallet.availableBalance) <
-            Number(requestedPlan.upgradePrice)
+            availableBalance <
+            requiredAmount
         ) {
             sufficientBalance = false;
 
             failedChecks.push({
-                key: "wallet",
-                message: "Insufficient wallet balance.",
+                key:
+                    "insufficientBalance",
+
+                message:
+                    "You do not have sufficient available wallet balance for this upgrade.",
             });
         }
 
@@ -411,56 +848,57 @@ export class UpgradeService {
             canUpgrade,
 
             currentPlan: {
-                id: currentPlan.id,
-                name: currentPlan.name,
-                sortOrder: currentPlan.sortOrder,
+                id:
+                    currentPlan.id,
+
+                name:
+                    currentPlan.name,
+
+                sortOrder:
+                    currentPlan.sortOrder,
             },
 
             requestedPlan: {
-                id: requestedPlan.id,
-                name: requestedPlan.name,
-                sortOrder: requestedPlan.sortOrder,
-                upgradePrice: requestedPlan.upgradePrice,
+                id:
+                    requestedPlan.id,
+
+                name:
+                    requestedPlan.name,
+
+                sortOrder:
+                    requestedPlan.sortOrder,
+
+                upgradePrice:
+                    requestedPlan.upgradePrice,
             },
 
             wallet: {
-                balance: wallet.availableBalance,
-                required: requestedPlan.upgradePrice,
-                sufficient: sufficientBalance,
+                balance:
+                    wallet.availableBalance,
+
+                sufficient:
+                    sufficientBalance,
             },
 
-            checks: [
-            {
-                key: "membership",
-                title: "Membership Eligible",
-                description:
-                    "Your current membership can be upgraded.",
-                passed: validMembership,
-            },
-            {
-                key: "sequence",
-                title: "Upgrade Path",
-                description:
-                    "You're upgrading to the next membership level.",
-                passed: sequentialUpgrade,
-            },
-            {
-                key: "wallet",
-                title: "Wallet Balance",
-                description:
-                    "Your wallet contains enough balance.",
-                passed: sufficientBalance,
-            },
-            {
-                key: "pending",
-                title: "Pending Request",
-                description:
-                    "No upgrade request is awaiting approval.",
-                passed: noPendingRequest,
-            },
-        ],
+            checks: {
+                validMembership,
 
-            failedChecks,
+                sequentialUpgrade,
+
+                noPendingRequest,
+
+                sufficientBalance,
+            },
+
+            reason:
+                failedChecks.length > 0
+                    ? failedChecks
+                          .map(
+                              (check) =>
+                                  check.message,
+                          )
+                          .join(" ")
+                    : null,
         };
     }
 }

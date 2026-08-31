@@ -4,6 +4,8 @@ CREATE TYPE "public"."daily_order_item_status" AS ENUM('pending', 'completed', '
 CREATE TYPE "public"."withdrawal_status" AS ENUM('pending', 'approved', 'rejected', 'paid');--> statement-breakpoint
 CREATE TYPE "public"."advertisement_status" AS ENUM('draft', 'active', 'inactive', 'scheduled', 'expired');--> statement-breakpoint
 CREATE TYPE "public"."deposit_status" AS ENUM('pending', 'under_review', 'approved', 'declined', 'cancelled');--> statement-breakpoint
+CREATE TYPE "public"."share_status" AS ENUM('started', 'in_progress', 'closed');--> statement-breakpoint
+CREATE TYPE "public"."share_purchase_status" AS ENUM('active', 'completed', 'return_credited');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"phone" varchar(20) NOT NULL,
@@ -227,12 +229,56 @@ CREATE TABLE "admin_wallet_transactions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"admin_id" uuid NOT NULL,
 	"type" varchar(50) NOT NULL,
-	"amount" numeric(12, 2) NOT NULL,
-	"balance_before" numeric(12, 2) NOT NULL,
-	"balance_after" numeric(12, 2) NOT NULL,
+	"amount" numeric(18, 2) NOT NULL,
+	"balance_before" numeric(18, 2) NOT NULL,
+	"balance_after" numeric(18, 2) NOT NULL,
 	"description" varchar(255) NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "shares" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"created_by" uuid NOT NULL,
+	"name" varchar(150) NOT NULL,
+	"logo" varchar(500),
+	"logo_public_id" varchar(255),
+	"description" text,
+	"daily_return_percentage" numeric(8, 4) NOT NULL,
+	"cycle_days" integer NOT NULL,
+	"status" "share_status" DEFAULT 'started' NOT NULL,
+	"started_at" timestamp DEFAULT now() NOT NULL,
+	"closed_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "shares_daily_return_percentage_positive" CHECK ("shares"."daily_return_percentage" > 0),
+	CONSTRAINT "shares_cycle_days_positive" CHECK ("shares"."cycle_days" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "share_purchases" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"share_id" uuid NOT NULL,
+	"wallet_id" uuid NOT NULL,
+	"purchase_amount" numeric(18, 2) NOT NULL,
+	"daily_return_percentage" numeric(8, 4) NOT NULL,
+	"daily_return_amount" numeric(18, 2) NOT NULL,
+	"cycle_days" integer NOT NULL,
+	"total_return_amount" numeric(18, 2) NOT NULL,
+	"purchased_at" timestamp DEFAULT now() NOT NULL,
+	"expected_return_at" timestamp NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"return_credited_at" timestamp,
+	"status" "share_purchase_status" DEFAULT 'active' NOT NULL,
+	"purchase_reference" varchar(100) NOT NULL,
+	"return_reference" varchar(100),
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "share_purchases_purchase_amount_positive" CHECK ("share_purchases"."purchase_amount" > 0),
+	CONSTRAINT "share_purchases_daily_return_percentage_positive" CHECK ("share_purchases"."daily_return_percentage" > 0),
+	CONSTRAINT "share_purchases_daily_return_amount_positive" CHECK ("share_purchases"."daily_return_amount" > 0),
+	CONSTRAINT "share_purchases_cycle_days_positive" CHECK ("share_purchases"."cycle_days" > 0),
+	CONSTRAINT "share_purchases_total_return_positive" CHECK ("share_purchases"."total_return_amount" > 0)
 );
 --> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_membership_plan_fk" FOREIGN KEY ("membership_plan_id") REFERENCES "public"."membership_plans"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
@@ -264,6 +310,10 @@ ALTER TABLE "deposits" ADD CONSTRAINT "deposits_user_id_users_id_fk" FOREIGN KEY
 ALTER TABLE "deposits" ADD CONSTRAINT "deposits_wallet_id_wallets_id_fk" FOREIGN KEY ("wallet_id") REFERENCES "public"."wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deposits" ADD CONSTRAINT "deposits_reviewed_by_users_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "admin_wallet_transactions" ADD CONSTRAINT "admin_wallet_transactions_admin_id_users_id_fk" FOREIGN KEY ("admin_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "shares" ADD CONSTRAINT "shares_created_by_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "share_purchases" ADD CONSTRAINT "share_purchases_user_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "share_purchases" ADD CONSTRAINT "share_purchases_share_fk" FOREIGN KEY ("share_id") REFERENCES "public"."shares"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "share_purchases" ADD CONSTRAINT "share_purchases_wallet_fk" FOREIGN KEY ("wallet_id") REFERENCES "public"."wallets"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "users_membership_plan_idx" ON "users" USING btree ("membership_plan_id");--> statement-breakpoint
 CREATE INDEX "users_phone_idx" ON "users" USING btree ("phone");--> statement-breakpoint
 CREATE INDEX "users_email_idx" ON "users" USING btree ("email");--> statement-breakpoint
@@ -300,4 +350,15 @@ CREATE INDEX "deposits_wallet_idx" ON "deposits" USING btree ("wallet_id");--> s
 CREATE INDEX "deposits_status_idx" ON "deposits" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "deposits_reviewed_by_idx" ON "deposits" USING btree ("reviewed_by");--> statement-breakpoint
 CREATE INDEX "deposits_created_at_idx" ON "deposits" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "deposits_reference_idx" ON "deposits" USING btree ("reference");
+CREATE INDEX "deposits_reference_idx" ON "deposits" USING btree ("reference");--> statement-breakpoint
+CREATE INDEX "shares_created_by_idx" ON "shares" USING btree ("created_by");--> statement-breakpoint
+CREATE INDEX "shares_status_idx" ON "shares" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "shares_created_at_idx" ON "shares" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "share_purchases_user_idx" ON "share_purchases" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "share_purchases_share_idx" ON "share_purchases" USING btree ("share_id");--> statement-breakpoint
+CREATE INDEX "share_purchases_wallet_idx" ON "share_purchases" USING btree ("wallet_id");--> statement-breakpoint
+CREATE INDEX "share_purchases_status_idx" ON "share_purchases" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "share_purchases_expires_at_idx" ON "share_purchases" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX "share_purchases_purchased_at_idx" ON "share_purchases" USING btree ("purchased_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "share_purchases_purchase_reference_unique" ON "share_purchases" USING btree ("purchase_reference");--> statement-breakpoint
+CREATE UNIQUE INDEX "share_purchases_return_reference_unique" ON "share_purchases" USING btree ("return_reference");

@@ -20,6 +20,7 @@ export interface CommissionTransactionMetadata {
 export interface CreateSystemTransactionDto {
     userId: string;
     walletId: string;
+    withdrawId?: string;
     amount: string;
     balanceBefore: string;
     balanceAfter: string;

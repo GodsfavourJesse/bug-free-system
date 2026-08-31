@@ -1,7 +1,14 @@
 import { users } from "../../database/schema";
 
-export type ReferralUser =
-    typeof users.$inferSelect;
+export interface ReferralUser {
+    id: string;
+    phone: string;
+    email: string | null;
+    referralCode: string;
+    membershipPlanId: string | null;
+    isActive: boolean;
+    createdAt: Date;
+}
 
 export interface ReferralTreeNode {
     user: ReferralUser;

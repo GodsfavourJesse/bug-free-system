@@ -52,6 +52,10 @@ export const env = {
             .split(",")
             .map(url => url.trim())
             .filter(Boolean),
+
+        referralBaseUrl: requireEnv(
+            "REFERRAL_BASE_URL",
+        ),
     },
 
     admin: {

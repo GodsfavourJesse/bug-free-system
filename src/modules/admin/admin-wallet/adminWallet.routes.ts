@@ -17,6 +17,8 @@ router.get(
 
 router.get(
     "/transactions",
+    authenticate,
+    authorize(USER_ROLES.ADMIN),
     adminWalletTransactionController.getTransactions,
 )
 

@@ -7,17 +7,21 @@ import { db } from "../../database";
 
 export class WalletService {
 
-    // Create a wallet for a new user.
-    // A user can only own one wallet.
+    /**
+     * Create a wallet for a new user.
+     *
+     * A user can only own one wallet.
+     */
     async createWallet(
         userId: string,
     ) {
         return withTransaction(
             async (tx) => {
-                const existingWallet = await walletRepository.findByUserId(
-                    tx,
-                    userId,
-                );
+                const existingWallet =
+                    await walletRepository.findByUserId(
+                        tx,
+                        userId,
+                    );
 
                 if (existingWallet) {
                     throw new WalletAlreadyExistsError();
@@ -27,12 +31,13 @@ export class WalletService {
                     tx,
                     userId,
                 );
-
             },
         );
     }
 
-    // Find wallet by ID.
+    /**
+     * Find wallet by ID.
+     */
     async findById(
         executor: DbExecutor = db,
         walletId: string,
@@ -48,7 +53,9 @@ export class WalletService {
         );
     }
 
-    // Return a user's wallet.
+    /**
+     * Return a user's wallet.
+     */
     async findByUserId(
         executor: DbExecutor = db,
         userId: string,
@@ -64,8 +71,9 @@ export class WalletService {
         );
     }
 
-    // Retrieves a user's wallet.
-    // Throws if the wallet does not exist.
+    /**
+     * Retrieve a user's wallet.
+     */
     async getWallet(
         userId: string,
     ) {
@@ -75,25 +83,39 @@ export class WalletService {
         );
     }
 
-    // Returns the current wallet balances.
-    // Without exposing the full wallet.
+    /**
+     * Return current wallet balances.
+     */
     async getBalance(
         userId: string,
     ) {
-        const wallet = await this.getWallet(
-            userId,
-        );
+        const wallet =
+            await this.getWallet(userId);
 
         return {
-            availableBalance: wallet.availableBalance,
-            heldBalance: wallet.heldBalance,
-            totalEarned: wallet.totalEarned,
-            totalDeposited: wallet.totalDeposited,
-            totalWithdrawn: wallet.totalWithdrawn,
+            availableBalance:
+                wallet.availableBalance,
+
+            heldBalance:
+                wallet.heldBalance,
+
+            totalEarned:
+                wallet.totalEarned,
+
+            totalDeposited:
+                wallet.totalDeposited,
+
+            totalWithdrawn:
+                wallet.totalWithdrawn,
         };
     }
 
-    // Lock wallet.
+    /**
+     * Lock a user's wallet row.
+     *
+     * IMPORTANT:
+     * Must be used inside a transaction.
+     */
     async lockByUserId(
         executor: DbExecutor,
         userId: string,
@@ -109,7 +131,9 @@ export class WalletService {
         );
     }
 
-    // Credit only available balance.
+    /**
+     * Credit available balance.
+     */
     async creditBalance(
         executor: DbExecutor,
         userId: string,
@@ -122,7 +146,9 @@ export class WalletService {
             );
 
         const before =
-            Number(wallet.availableBalance);
+            Number(
+                wallet.availableBalance,
+            );
 
         const after =
             before + amount;
@@ -137,18 +163,14 @@ export class WalletService {
         );
     }
 
-    // Credit an already-locked user wallet.
-    //
-    // IMPORTANT:
-    // The wallet must already have been locked
-    // with lockByUserId() in the same transaction.
-    //
-    // This method does NOT:
-    // - lock the wallet
-    // - create a transaction
-    // - modify totalEarned
-    // - modify totalDeposited
-    // - modify totalWithdrawn
+    /**
+     * Credit an already locked wallet.
+     *
+     * Does NOT:
+     * - lock the wallet
+     * - create a transaction
+     * - modify totals
+     */
     async creditLockedWallet(
         executor: DbExecutor,
         walletId: string,
@@ -164,7 +186,9 @@ export class WalletService {
         );
     }
 
-    // Credit commission.
+    /**
+     * Credit commission to a user.
+     */
     async credit(
         executor: DbExecutor,
         userId: string,
@@ -191,23 +215,47 @@ export class WalletService {
             wallet.id,
             (available + amount).toFixed(2),
             (earned + amount).toFixed(2),
-        )
+        );
     }
 
+    /**
+     * Move money from AVAILABLE to HELD.
+     *
+     * Used when:
+     * - Upgrade request is created
+     * - Withdrawal request is created
+     * - Other temporary reservations
+     *
+     * Example:
+     *
+     * Available: ₦100,000
+     * Held:      ₦0
+     *
+     * Hold ₦21,600
+     *
+     * Available: ₦78,400
+     * Held:      ₦21,600
+     */
     async holdBalance(
         executor: DbExecutor,
         userId: string,
         amount: number,
     ) {
-        amount = walletValidation.validateAmount(amount);
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
 
-        const wallet = await this.lockByUserId(
-            executor,
-            userId,
-        );
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
 
         const available =
-            Number(wallet.availableBalance);
+            Number(
+                wallet.availableBalance,
+            );
 
         walletValidation.ensureAvailableBalance(
             available,
@@ -215,7 +263,9 @@ export class WalletService {
         );
 
         const held =
-            Number(wallet.heldBalance);
+            Number(
+                wallet.heldBalance,
+            );
 
         return walletRepository.updateBalances(
             executor,
@@ -234,20 +284,34 @@ export class WalletService {
         );
     }
 
+    /**
+     * Release money from HELD back to AVAILABLE.
+     *
+     * Used when:
+     * - Upgrade is rejected
+     * - Upgrade is cancelled
+     * - Withdrawal is rejected/cancelled
+     */
     async releaseHeldBalance(
         executor: DbExecutor,
         userId: string,
         amount: number,
     ) {
-        amount = walletValidation.validateAmount(amount);
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
 
-        const wallet = await this.lockByUserId(
-            executor,
-            userId,
-        );
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
 
         const held =
-            Number(wallet.heldBalance);
+            Number(
+                wallet.heldBalance,
+            );
 
         walletValidation.ensureHeldBalance(
             held,
@@ -255,7 +319,9 @@ export class WalletService {
         );
 
         const available =
-            Number(wallet.availableBalance);
+            Number(
+                wallet.availableBalance,
+            );
 
         return walletRepository.updateBalances(
             executor,
@@ -274,64 +340,50 @@ export class WalletService {
         );
     }
 
-    async debitAvailableBalance(
+    /**
+     * Complete a payment using money that is
+     * already in HELD balance.
+     *
+     * This is intentionally different from
+     * debitAvailableBalance().
+     *
+     * At this stage the money has already been
+     * removed from availableBalance when the
+     * request was created.
+     *
+     * Approval therefore only removes the money
+     * from heldBalance.
+     *
+     * Example:
+     *
+     * Available: ₦78,400
+     * Held:      ₦21,600
+     *
+     * Complete ₦21,600 payment:
+     *
+     * Available: ₦78,400
+     * Held:      ₦0
+     */
+    async completeHeldPayment(
         executor: DbExecutor,
         userId: string,
         amount: number,
     ) {
-        amount = walletValidation.validateAmount(amount);
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
 
-        const wallet = await this.lockByUserId(
-            executor,
-            userId,
-        );
-
-        const available =
-            Number(wallet.availableBalance);
-
-        walletValidation.ensureAvailableBalance(
-            available,
-            amount,
-        );
-
-        return walletRepository.updateBalances(
-            executor,
-            wallet.id,
-            {
-                availableBalance:
-                    walletValidation.toDecimal(
-                        available - amount,
-                    ),
-            },
-        );
-    }
-
-    async debitLockedWallet(
-        executor: DbExecutor,
-        walletId: string,
-        balanceAfter: string,
-    ) {
-        return walletRepository.debitAvailableBalance(
-            executor,
-            walletId,
-            balanceAfter,
-        );
-    }
-
-    async decreaseHeldBalance(
-        executor: DbExecutor,
-        userId: string,
-        amount: number,
-    ) {
-        amount = walletValidation.validateAmount(amount);
-
-        const wallet = await this.lockByUserId(
-            executor,
-            userId,
-        );
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
 
         const held =
-            Number(wallet.heldBalance);
+            Number(
+                wallet.heldBalance,
+            );
 
         walletValidation.ensureHeldBalance(
             held,
@@ -350,20 +402,129 @@ export class WalletService {
         );
     }
 
+    /**
+     * Debit available balance.
+     */
+    async debitAvailableBalance(
+        executor: DbExecutor,
+        userId: string,
+        amount: number,
+    ) {
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
+
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
+
+        const available =
+            Number(
+                wallet.availableBalance,
+            );
+
+        walletValidation.ensureAvailableBalance(
+            available,
+            amount,
+        );
+
+        return walletRepository.updateBalances(
+            executor,
+            wallet.id,
+            {
+                availableBalance:
+                    walletValidation.toDecimal(
+                        available - amount,
+                    ),
+            },
+        );
+    }
+
+    /**
+     * Debit an already locked wallet.
+     */
+    async debitLockedWallet(
+        executor: DbExecutor,
+        walletId: string,
+        balanceAfter: string,
+    ) {
+        return walletRepository.debitAvailableBalance(
+            executor,
+            walletId,
+            balanceAfter,
+        );
+    }
+
+    /**
+     * Decrease held balance.
+     *
+     * Kept for existing consumers such as
+     * withdrawal-related logic.
+     */
+    async decreaseHeldBalance(
+        executor: DbExecutor,
+        userId: string,
+        amount: number,
+    ) {
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
+
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
+
+        const held =
+            Number(
+                wallet.heldBalance,
+            );
+
+        walletValidation.ensureHeldBalance(
+            held,
+            amount,
+        );
+
+        return walletRepository.updateBalances(
+            executor,
+            wallet.id,
+            {
+                heldBalance:
+                    walletValidation.toDecimal(
+                        held - amount,
+                    ),
+            },
+        );
+    }
+
+    /**
+     * Increase total deposited.
+     */
     async increaseDeposited(
         executor: DbExecutor,
         userId: string,
         amount: number,
     ) {
-        amount = walletValidation.validateAmount(amount);
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
 
-        const wallet = await this.lockByUserId(
-            executor,
-            userId,
-        );
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
 
         const totalDeposited =
-            Number(wallet.totalDeposited);
+            Number(
+                wallet.totalDeposited,
+            );
 
         return walletRepository.updateBalances(
             executor,
@@ -377,20 +538,29 @@ export class WalletService {
         );
     }
 
+    /**
+     * Increase total withdrawn.
+     */
     async increaseWithdrawn(
         executor: DbExecutor,
         userId: string,
         amount: number,
     ) {
-        amount = walletValidation.validateAmount(amount);
+        amount =
+            walletValidation.validateAmount(
+                amount,
+            );
 
-        const wallet = await this.lockByUserId(
-            executor,
-            userId,
-        );
+        const wallet =
+            await this.lockByUserId(
+                executor,
+                userId,
+            );
 
         const totalWithdrawn =
-            Number(wallet.totalWithdrawn);
+            Number(
+                wallet.totalWithdrawn,
+            );
 
         return walletRepository.updateBalances(
             executor,
@@ -405,4 +575,5 @@ export class WalletService {
     }
 }
 
-export const walletService = new WalletService();
+export const walletService =
+    new WalletService();

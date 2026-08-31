@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { transactionRepository } from "./transaction.repository";
 import { transactionValidation } from "./transaction.validation";
-import { DuplicateTransactionReferenceError } from "./transaction.errors";
+import { DuplicateTransactionReferenceError, TransactionNotFoundError } from "./transaction.errors";
 import { CreateSystemTransactionDto } from "./transactionDto";import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
 import { DbExecutor } from "../../database/types/types";
 import { db } from "../../database";
@@ -222,16 +222,18 @@ export class TransactionService {
             status,
         );
 
-        await this.findByWithdrawalId(
-            withdrawalId,
-            executor,
-        );
+        const transaction =
+            await transactionRepository.updateStatusByWithdrawalId(
+                executor,
+                withdrawalId,
+                status,
+            );
 
-        return transactionRepository.updateStatusByWithdrawalId(
-            executor,
-            withdrawalId,
-            status,
-        );
+        if (!transaction) {
+            throw new TransactionNotFoundError();
+        }
+
+        return transaction;
     }
 
     // Create a transaction from another module.
@@ -242,30 +244,22 @@ export class TransactionService {
     // - Commission
     // - Wallet
     async createSystemTransaction(
-        executor: DbExecutor = db,
         dto: CreateSystemTransactionDto,
+        executor: DbExecutor = db,
     ) {
         return transactionRepository.create(
             executor,
             {
                 userId: dto.userId,
-
                 walletId: dto.walletId,
-
+                withdrawId: dto.withdrawId,
                 amount: dto.amount,
-
                 balanceBefore: dto.balanceBefore,
-
                 balanceAfter: dto.balanceAfter,
-
                 type: dto.type,
-
                 status: dto.status,
-
                 reference: dto.reference ?? this.generateReference(),
-
                 description: dto.description,
-
                 metadata: dto.metadata,
             },
         );

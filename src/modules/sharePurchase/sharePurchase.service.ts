@@ -147,7 +147,6 @@ export class SharePurchaseService {
                 // 10. Create USER transaction.
                 // This represents the debit from the user's wallet.
                 const userTransaction = await transactionService.createSystemTransaction(
-                    tx,
                     {
                         userId,
                         walletId: userWallet.id,
@@ -173,6 +172,7 @@ export class SharePurchaseService {
                             expiresAt: calculation.expiresAt,
                         },
                     },
+                    tx,
                 );
 
                 // 11. Create ADMIN transaction.
