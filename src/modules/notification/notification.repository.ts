@@ -1,28 +1,116 @@
-import { and, desc,
+import {
+    and,
+    desc,
     eq,
 } from "drizzle-orm";
-import { DbExecutor } from "../../database/types/types";
-import { notifications, users } from "../../database/schema";
 
+import {
+    DbExecutor,
+} from "../../database/types/types";
+
+import {
+    notifications,
+    users,
+} from "../../database/schema";
 
 export class NotificationRepository {
 
-
-    async findAdmins(
+    /**
+     * Find all active users.
+     *
+     * Used for system-wide notifications.
+     */
+    async findUsers(
         executor: DbExecutor,
     ) {
+
         return executor
-            .select()
+            .select({
+                id: users.id,
+            })
             .from(users)
             .where(
-                eq(
-                    users.role,
-                    "admin",
+                and(
+                    eq(
+                        users.role,
+                        "user",
+                    ),
+                    eq(
+                        users.isActive,
+                        true,
+                    ),
                 ),
             );
     }
 
-    // Create notification.
+    /**
+     * Find all active administrators.
+     *
+     * Used when a business event needs to
+     * notify every administrator.
+     */
+    async findAdmins(
+        executor: DbExecutor,
+    ) {
+
+        return executor
+            .select({
+                id: users.id,
+            })
+            .from(users)
+            .where(
+                and(
+                    eq(
+                        users.role,
+                        "admin",
+                    ),
+                    eq(
+                        users.isActive,
+                        true,
+                    ),
+                ),
+            );
+    }
+
+
+    /**
+     * Find an active user by ID.
+     *
+     * Used before creating a user notification.
+     */
+    async findActiveUserById(
+        executor: DbExecutor,
+        userId: string,
+    ) {
+
+        const [user] =
+            await executor
+                .select({
+                    id: users.id,
+                    role: users.role,
+                    isActive: users.isActive,
+                })
+                .from(users)
+                .where(
+                    and(
+                        eq(
+                            users.id,
+                            userId,
+                        ),
+                        eq(
+                            users.isActive,
+                            true,
+                        ),
+                    ),
+                )
+                .limit(1);
+
+        return user ?? null;
+    }
+
+    /**
+     * Create notification.
+     */
     async create(
         executor: DbExecutor,
         data: typeof notifications.$inferInsert,
@@ -37,10 +125,14 @@ export class NotificationRepository {
         return notification;
     }
 
-    // Find notification by ID.
-    async findById(
+    /**
+     * Find notification by ID
+     * belonging to a specific user.
+     */
+    async findByIdForUser(
         executor: DbExecutor,
         id: string,
+        userId: string,
     ) {
 
         const [notification] =
@@ -48,9 +140,15 @@ export class NotificationRepository {
                 .select()
                 .from(notifications)
                 .where(
-                    eq(
-                        notifications.id,
-                        id,
+                    and(
+                        eq(
+                            notifications.id,
+                            id,
+                        ),
+                        eq(
+                            notifications.userId,
+                            userId,
+                        ),
                     ),
                 )
                 .limit(1);
@@ -58,7 +156,9 @@ export class NotificationRepository {
         return notification ?? null;
     }
 
-    // Find all notifications for a user.
+    /**
+     * Find all notifications for a user.
+     */
     async findByUser(
         executor: DbExecutor,
         userId: string,
@@ -80,7 +180,9 @@ export class NotificationRepository {
             );
     }
 
-    // Find unread notifications.
+    /**
+     * Find unread notifications.
+     */
     async findUnread(
         executor: DbExecutor,
         userId: string,
@@ -108,10 +210,15 @@ export class NotificationRepository {
             );
     }
 
-    // Mark notification as read.
+    /**
+     * Mark one user's notification as read.
+     *
+     * Ownership is enforced at repository level.
+     */
     async markAsRead(
         executor: DbExecutor,
         id: string,
+        userId: string,
     ) {
 
         const [notification] =
@@ -122,17 +229,25 @@ export class NotificationRepository {
                     readAt: new Date(),
                 })
                 .where(
-                    eq(
-                        notifications.id,
-                        id,
+                    and(
+                        eq(
+                            notifications.id,
+                            id,
+                        ),
+                        eq(
+                            notifications.userId,
+                            userId,
+                        ),
                     ),
                 )
                 .returning();
 
-        return notification;
+        return notification ?? null;
     }
 
-    // Mark every notification as read.
+    /**
+     * Mark all user's notifications as read.
+     */
     async markAllAsRead(
         executor: DbExecutor,
         userId: string,
@@ -145,30 +260,50 @@ export class NotificationRepository {
                 readAt: new Date(),
             })
             .where(
-                eq(
-                    notifications.userId,
-                    userId,
+                and(
+                    eq(
+                        notifications.userId,
+                        userId,
+                    ),
+                    eq(
+                        notifications.isRead,
+                        false,
+                    ),
                 ),
             );
     }
 
-    // Delete one notification.
+    /**
+     * Delete one user's notification.
+     *
+     * Ownership is enforced at repository level.
+     */
     async delete(
         executor: DbExecutor,
         id: string,
+        userId: string,
     ) {
 
         await executor
             .delete(notifications)
             .where(
-                eq(
-                    notifications.id,
-                    id,
+                and(
+                    eq(
+                        notifications.id,
+                        id,
+                    ),
+                    eq(
+                        notifications.userId,
+                        userId,
+                    ),
                 ),
             );
     }
 
-    // Delete every notification for a user.
+    /**
+     * Delete every notification
+     * belonging to a user.
+     */
     async deleteAll(
         executor: DbExecutor,
         userId: string,
@@ -183,8 +318,6 @@ export class NotificationRepository {
                 ),
             );
     }
-
-    
 }
 
 export const notificationRepository =

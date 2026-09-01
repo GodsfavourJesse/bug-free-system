@@ -12,6 +12,8 @@ import withdrawalRoutes from "../modules/withdrawal/withdrawal.routes";
 import completedAdvertisementRoutes from "../modules/completed-advertisement/completedAdvertisement.routes";
 import depositRoutes from "../modules/deposit/deposit.routes";
 import shareRoutes from "../modules/share/share.routes";
+import supportRoutes from "../modules/support/support.routes";
+import corporateRoutes from "../modules/corporate/corporate.routes";
 
 
 import adminDashboardRoutes from "../modules/admin/dashboard/dashboard.routes";
@@ -24,6 +26,8 @@ import adminAdvertisementRoutes from "../modules/admin/advertisement/advertiseme
 import adminDepositRoutes from "../modules/admin/admin-deposit/adminDeposit.routes";
 import adminWalletRoutes from "../modules/admin/admin-wallet/adminWallet.routes";
 import adminShareRoutes from "../modules/admin/admin-share/adminShare.routes";
+import adminSupportRoutes from "../modules/admin/admin-support/adminSupport.routes";
+import adminCorporateRoutes from "../modules/admin/admin-corporate/adminCorporate.routes";
 
 const router = Router();
 
@@ -94,6 +98,16 @@ router.use(
     shareRoutes,
 );
 
+router.use(
+    "/support",
+    supportRoutes,
+);
+
+router.use(
+    "/corporate",
+    corporateRoutes,
+);
+
 
 // ADMIN
 
@@ -145,6 +159,16 @@ router.use(
 router.use(
     "/admin/shares",
     adminShareRoutes,
+);
+
+router.use(
+    "/admin/support",
+    adminSupportRoutes,
+);
+
+router.use(
+    "/admin/corporate",
+    adminCorporateRoutes,
 );
 
 export default router;

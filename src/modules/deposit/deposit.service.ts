@@ -203,14 +203,38 @@ export class DepositService {
                 );
 
                 // Cancel the deposit.
-                const cancelled =
-                    await depositRepository.cancel(
-                        tx,
-                        depositId,
+                const cancelled = await depositRepository.cancel(
+                    tx,
+                    depositId,
+                );
+
+                if (!cancelled) {
+                    throw new Error(
+                        "Failed to cancel deposit.",
                     );
+                }
+
+                await notificationService.notifyUser(
+                    tx,
+                    {
+                        userId,
+                        title: "Deposit Request Cancelled",
+
+                        message:
+                            `Your deposit request (${deposit.reference}) has been cancelled successfully.`,
+
+                        type: NotificationType.DEPOSIT,
+
+                        metadata: {
+                            depositId: deposit.id,
+                            reference: deposit.reference,
+                            amount: deposit.amount,
+                            status: DepositStatus.CANCELLED,
+                        },
+                    },
+                );
 
                 return cancelled;
-
             },
         );
     }

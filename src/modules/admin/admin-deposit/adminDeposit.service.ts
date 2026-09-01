@@ -288,6 +288,8 @@ export class AdminDepositService {
 
                         metadata: {
                             depositId: deposit.id,
+                            amount: deposit.amount,
+                            status: "approved",
                         },
                     },
                 );

@@ -37,6 +37,9 @@ export enum NotificationType {
     // suspicious activity, etc.
     SECURITY = "security",
 
+    // Support
+    SUPPORT = "support",
+
     // General system notifications.
     SYSTEM = "system",
 }

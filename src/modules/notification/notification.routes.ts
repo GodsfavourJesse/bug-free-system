@@ -1,60 +1,106 @@
-import { Router } from "express";
+import {
+    Router,
+} from "express";
 
+import {
+    notificationController,
+} from "./notification.controller";
 
-import { notificationController } from "./notification.controller";
-import { authenticate } from "../../middlewares/auth.middleware";
+import {
+    authenticate,
+} from "../../middlewares/auth.middleware";
 
-const router = Router();
+const router =
+    Router();
 
-// All notification routes require authentication.
+/**
+ * All notification routes require
+ * an authenticated user.
+ */
 router.use(authenticate);
 
-// Get all notifications.
+/**
+ * Get all notifications.
+ *
+ * GET /api/v1/notifications
+ */
 router.get(
     "/",
-    notificationController.getNotifications.bind(
-        notificationController,
-    ),
+    notificationController
+        .getNotifications
+        .bind(
+            notificationController,
+        ),
 );
 
-// Get unread notifications.
+/**
+ * Get unread notifications.
+ *
+ * GET /api/v1/notifications/unread
+ */
 router.get(
     "/unread",
-    notificationController.getUnread.bind(
-        notificationController,
-    ),
+    notificationController
+        .getUnread
+        .bind(
+            notificationController,
+        ),
 );
 
-// Mark notification as read.
+/**
+ * Mark one notification as read.
+ *
+ * PATCH /api/v1/notifications/:id/read
+ */
 router.patch(
     "/:id/read",
-    notificationController.markAsRead.bind(
-        notificationController,
-    ),
+    notificationController
+        .markAsRead
+        .bind(
+            notificationController,
+        ),
 );
 
-// Mark every notification as read.
+/**
+ * Mark all notifications as read.
+ *
+ * PATCH /api/v1/notifications/read-all
+ */
 router.patch(
     "/read-all",
-    notificationController.markAllAsRead.bind(
-        notificationController,
-    ),
+    notificationController
+        .markAllAsRead
+        .bind(
+            notificationController,
+        ),
 );
 
-// Delete one notification.
+/**
+ * Delete one notification.
+ *
+ * DELETE /api/v1/notifications/:id
+ */
 router.delete(
     "/:id",
-    notificationController.delete.bind(
-        notificationController,
-    ),
+    notificationController
+        .delete
+        .bind(
+            notificationController,
+        ),
 );
 
-// Delete every notification.
+/**
+ * Delete all notifications.
+ *
+ * DELETE /api/v1/notifications
+ */
 router.delete(
     "/",
-    notificationController.deleteAll.bind(
-        notificationController,
-    ),
+    notificationController
+        .deleteAll
+        .bind(
+            notificationController,
+        ),
 );
 
 export default router;

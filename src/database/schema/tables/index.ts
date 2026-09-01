@@ -15,3 +15,7 @@ export * from "./deposits";
 export * from "./admin-wallet-transactions";
 export * from "./shares";
 export * from "./sharePurchases";
+export * from "./supportConversations";
+export * from "./supportMessages";
+export * from "./corporateAnnouncements";
+export * from "./corporateAnnouncementReads";

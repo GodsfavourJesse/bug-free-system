@@ -12,6 +12,8 @@ import { generateReferralCode } from "../../helpers/referral.helper";
 import { withTransaction } from "../../database/transaction/transaction";
 import { validateAdminLogin, validateUserLogin} from "../../helpers/login.helper";
 import { validateRefreshToken } from "../../helpers/refresh.helper";
+import { notificationService } from "../notification/notification.service";
+import { NotificationType } from "../../database/enums/notification.enum";
 
 export class AuthService {
 
@@ -51,21 +53,61 @@ export class AuthService {
 
         const user = await withTransaction(
             async (tx) => {
-                const createdUser = await authRepository.createUser(
-                    tx,
-                    {
-                        phone,
-                        password: hashedPassword,
-                        referralCode,
-                        referredBy,
-                        membershipPlanId: internshipPlan.id,
-                        country: country || "Nigeria",
-                    },
-                );
+                const createdUser =
+                    await authRepository.createUser(
+                        tx,
+                        {
+                            phone,
+                            password: hashedPassword,
+                            referralCode,
+                            referredBy,
+                            membershipPlanId:
+                                internshipPlan.id,
+                            country:
+                                country || "Nigeria",
+                        },
+                    );
 
                 await walletRepository.create(
                     tx,
                     createdUser.id,
+                );
+
+                await notificationService.notifyUser(
+                    tx,
+                    {
+                        userId: createdUser.id,
+                        title: "Welcome",
+
+                        message:
+                            "Welcome to our platform. Your account has been created successfully.",
+
+                        type: NotificationType.SYSTEM,
+
+                        metadata: {
+                            event: "user_registered",
+                            membershipPlanId: internshipPlan.id,
+                        },
+                    },
+                );
+
+                await notificationService.notifyAdmins(
+                    tx,
+                    {
+                        title: "New User Registered",
+
+                        message:
+                            `A new user (${createdUser.phone}) has registered successfully.`,
+
+                        type: NotificationType.SYSTEM,
+
+                        metadata: {
+                            userId: createdUser.id,
+                            phone: createdUser.phone,
+                            referralCode: createdUser.referralCode,
+                            referredBy: createdUser.referredBy,
+                        },
+                    },
                 );
 
                 return createdUser;
@@ -235,21 +277,34 @@ export class AuthService {
             email?: string | null;
         },
     ) {
-        const result = await authRepository.findUserById(userId);
+        const result =
+            await authRepository.findUserById(
+                userId,
+            );
 
         if (!result) {
             throw new Error("User not found.");
         }
 
-        const currentUser = result.user;
+        const currentUser =
+            result.user;
 
-        let email: string | null | undefined;
+        let email:
+            | string
+            | null
+            | undefined;
 
         if (data.email !== undefined) {
-            email = data.email?.trim().toLowerCase() || null;
+            email =
+                data.email
+                    ?.trim()
+                    .toLowerCase() || null;
 
             if (email) {
-                const existingUser = await authRepository.findUserByEmail(email);
+                const existingUser =
+                    await authRepository.findUserByEmail(
+                        email,
+                    );
 
                 if (
                     existingUser &&
@@ -262,19 +317,56 @@ export class AuthService {
             }
         }
 
-        const updatedUser = await authRepository.updateUserEmail(
-            db,
-            userId,
-            email ?? currentUser.email ?? null,
-        );
+        const updatedUser =
+            await db.transaction(
+                async (tx) => {
 
-        if (!updatedUser) {
-            throw new Error(
-                "Unable to update profile.",
+                    const user =
+                        await authRepository
+                            .updateUserEmail(
+                                tx,
+                                userId,
+                                email ??
+                                    currentUser.email ??
+                                    null,
+                            );
+
+                    if (!user) {
+                        throw new Error(
+                            "Unable to update profile.",
+                        );
+                    }
+
+                    await notificationService
+                        .notifyUser(
+                            tx,
+                            {
+                                userId,
+
+                                title:
+                                    "Profile Updated",
+
+                                message:
+                                    "Your email address has been updated successfully.",
+
+                                type:
+                                    NotificationType.SECURITY,
+
+                                metadata: {
+                                    event:
+                                        "email_updated",
+                                },
+                            },
+                        );
+
+                    return user;
+                },
             );
-        }
 
-        const updatedProfile = await authRepository.findUserById(userId);
+        const updatedProfile =
+            await authRepository.findUserById(
+                userId,
+            );
 
         if (!updatedProfile) {
             throw new Error(
@@ -282,7 +374,9 @@ export class AuthService {
             );
         }
 
-        return toUserResponse(updatedProfile);
+        return toUserResponse(
+            updatedProfile,
+        );
     }
 
     async findUserById(id: string) {

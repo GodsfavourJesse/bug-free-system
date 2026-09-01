@@ -10,97 +10,112 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { users } from "./users";
-import { NotificationType } from "../../enums/notification.enum";
 
-export const notifications = pgTable(
-    "notifications",
-    {
-        id: uuid("id")
-            .defaultRandom()
-            .primaryKey(),
+import {
+    NotificationType,
+} from "../../enums/notification.enum";
 
-        /**
-         * Recipient of the notification.
-         */
-        userId: uuid("user_id")
-            .notNull()
-            .references(
-                () => users.id,
+export const notifications =
+    pgTable(
+        "notifications",
+        {
+            id: uuid("id")
+                .defaultRandom()
+                .primaryKey(),
+
+            userId: uuid("user_id")
+                .notNull()
+                .references(
+                    () => users.id,
+                    {
+                        onDelete:
+                            "cascade",
+                    },
+                ),
+
+            type: varchar(
+                "type",
                 {
-                    onDelete: "cascade",
+                    length: 50,
+                    enum:
+                        Object.values(
+                            NotificationType,
+                        ) as [
+                            NotificationType,
+                            ...NotificationType[],
+                        ],
                 },
+            ).notNull(),
+
+            title: varchar(
+                "title",
+                {
+                    length: 150,
+                },
+            ).notNull(),
+
+            message: text(
+                "message",
+            ).notNull(),
+
+            metadata: jsonb(
+                "metadata",
             ),
 
-        /**
-         * Notification category.
-         */
-        type: varchar("type", {
-            length: 50,
-            enum: Object.values(
-                NotificationType,
-            ) as [
-                NotificationType,
-                ...NotificationType[],
-            ],
-        }).notNull(),
+            isRead: boolean(
+                "is_read",
+            )
+                .default(false)
+                .notNull(),
 
-        /**
-         * Short notification title.
-         */
-        title: varchar("title", {
-            length: 150,
-        }).notNull(),
+            readAt: timestamp(
+                "read_at",
+            ),
 
-        /**
-         * Notification message.
-         */
-        message: text("message").notNull(),
+            createdAt:
+                timestamp(
+                    "created_at",
+                )
+                    .defaultNow()
+                    .notNull(),
+        },
 
-        /**
-         * Extra information.
-         *
-         * Examples:
-         * {
-         *   upgradeRequestId: "...",
-         *   withdrawalId: "...",
-         *   commissionId: "..."
-         * }
-         */
-        metadata: jsonb("metadata"),
+        (table) => ({
+            userIdx:
+                index(
+                    "notifications_user_idx",
+                ).on(
+                    table.userId,
+                ),
 
-        /**
-         * Whether the notification
-         * has been read.
-         */
-        isRead: boolean("is_read")
-            .default(false)
-            .notNull(),
+            userCreatedIdx:
+                index(
+                    "notifications_user_created_idx",
+                ).on(
+                    table.userId,
+                    table.createdAt,
+                ),
 
-        /**
-         * When the notification
-         * was read.
-         */
-        readAt: timestamp("read_at"),
+            userReadIdx:
+                index(
+                    "notifications_user_read_idx",
+                ).on(
+                    table.userId,
+                    table.isRead,
+                ),
 
-        createdAt: timestamp("created_at")
-            .defaultNow()
-            .notNull(),
-    },
-    (table) => ({
-        userIdx: index(
-            "notifications_user_idx",
-        ).on(table.userId),
+            typeIdx:
+                index(
+                    "notifications_type_idx",
+                ).on(
+                    table.type,
+                ),
 
-        typeIdx: index(
-            "notifications_type_idx",
-        ).on(table.type),
-
-        readIdx: index(
-            "notifications_read_idx",
-        ).on(table.isRead),
-
-        createdAtIdx: index(
-            "notifications_created_at_idx",
-        ).on(table.createdAt),
-    }),
-);
+            createdAtIdx:
+                index(
+                    "notifications_created_at_idx",
+                ).on(
+                    table.createdAt,
+                ),
+        }),
+    );

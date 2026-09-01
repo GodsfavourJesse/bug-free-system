@@ -309,16 +309,22 @@ export class WithdrawalService {
                         title: "Withdrawal Rejected",
 
                         message:
-                            `Your withdrawal request of ₦${Number(
-                                rejected.amount,
-                            ).toLocaleString(
+                            `Your withdrawal request of ₦${amount.toLocaleString(
                                 "en-NG",
-                            )} was rejected.`,
+                                {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                },
+                            )} has been rejected.${dto.adminRemark
+                                ? ` Reason: ${dto.adminRemark}`
+                                : ""}`,
 
                         type: NotificationType.WITHDRAWAL,
 
                         metadata: {
                             withdrawalId: rejected.id,
+                            amount,
+                            reason: dto.adminRemark,
                         },
                     },
                 );

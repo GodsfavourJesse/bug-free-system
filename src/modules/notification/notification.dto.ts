@@ -1,5 +1,6 @@
-import { NotificationType } from "../../database/enums/notification.enum";
-
+import {
+    NotificationType,
+} from "../../database/enums/notification.enum";
 
 /**
  * Create notification.
@@ -17,7 +18,7 @@ export interface CreateNotificationDto {
     type: NotificationType;
 
     /**
-     * Notification title.
+     * Short notification title.
      */
     title: string;
 
@@ -27,23 +28,18 @@ export interface CreateNotificationDto {
     message: string;
 
     /**
-     * Additional data.
-     *
-     * Example:
-     * - upgradeRequestId
-     * - withdrawalId
-     * - commissionId
+     * Optional business-event metadata.
      */
     metadata?: Record<string, unknown>;
 }
 
 /**
  * Update notification.
+ *
+ * Currently used conceptually for
+ * read state. The API uses dedicated
+ * read endpoints instead.
  */
 export interface UpdateNotificationDto {
-
-    /**
-     * Mark notification as read.
-     */
     isRead?: boolean;
 }
