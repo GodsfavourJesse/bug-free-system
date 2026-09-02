@@ -838,11 +838,56 @@ export class UpgradeService {
             });
         }
 
-        const canUpgrade =
+                const canUpgrade =
             validMembership &&
             sequentialUpgrade &&
             noPendingRequest &&
             sufficientBalance;
+
+        // ------------------------------------------------
+        // Build the checks array.
+        //
+        // IMPORTANT:
+        // The frontend expects `checks` as an ARRAY of
+        // { key, title, description, passed } objects,
+        // not a flat object of booleans.
+        // ------------------------------------------------
+
+        const checks: {
+            key: string;
+            title: string;
+            description: string;
+            passed: boolean;
+        }[] = [
+            {
+                key: "validMembership",
+                title: "Membership eligibility",
+                description:
+                    "Your current membership plan is eligible to upgrade.",
+                passed: validMembership,
+            },
+            {
+                key: "sequentialUpgrade",
+                title: "Sequential upgrade path",
+                description:
+                    "You are upgrading to the next available membership tier.",
+                passed: sequentialUpgrade,
+            },
+            {
+                key: "noPendingRequest",
+                title: "No pending request",
+                description:
+                    "You don't have another upgrade request in progress.",
+                passed: noPendingRequest,
+            },
+            {
+                key: "sufficientBalance",
+                title: "Sufficient wallet balance",
+                description:
+                    "Your available wallet balance covers the upgrade cost.",
+                passed: sufficientBalance,
+            },
+        ];
 
         return {
             canUpgrade,
@@ -880,15 +925,9 @@ export class UpgradeService {
                     sufficientBalance,
             },
 
-            checks: {
-                validMembership,
+            checks,
 
-                sequentialUpgrade,
-
-                noPendingRequest,
-
-                sufficientBalance,
-            },
+            failedChecks,
 
             reason:
                 failedChecks.length > 0

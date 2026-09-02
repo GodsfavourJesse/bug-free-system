@@ -8,6 +8,18 @@ export interface CreateUpgradeRequestDto {
     metadata?: Record<string, unknown>;
 }
 
+export interface UpgradeCheckItem {
+    key: string;
+    title: string;
+    description: string;
+    passed: boolean;
+}
+
+export interface UpgradeFailedCheckItem {
+    key: string;
+    message: string;
+}
+
 export interface UpgradeValidationResponse {
     canUpgrade: boolean;
 
@@ -29,12 +41,9 @@ export interface UpgradeValidationResponse {
         sufficient: boolean;
     };
 
-    checks: {
-        validMembership: boolean;
-        sequentialUpgrade: boolean;
-        noPendingRequest: boolean;
-        sufficientBalance: boolean;
-    };
+    checks: UpgradeCheckItem[];
+
+    failedChecks: UpgradeFailedCheckItem[];
 
     reason: string | null;
 }
