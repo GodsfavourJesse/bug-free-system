@@ -23,6 +23,7 @@ import {
 import { NotificationType } from "../../../database/enums/notification.enum";
 import { adminWalletService } from "../admin-wallet/adminWallet.service";
 import { adminWalletTransactionRepository } from "../admin-wallet/admin-wallet-transaction/adminWalletTransaction.repository";
+import { AdminWalletTransactionDirection } from "../../../database/enums/admin-wallet-transaction.enum";
 
 export class AdminDepositService {
 
@@ -192,11 +193,12 @@ export class AdminDepositService {
                     {
                         adminId: adminDebit.userId,
                         type: TransactionType.DEPOSIT_DEBIT,
+                        direction: AdminWalletTransactionDirection.DEBIT,
                         amount: amount.toFixed(2),
                         balanceBefore: adminDebit.balanceBefore.toFixed(2),
                         balanceAfter: adminDebit.balanceAfter.toFixed(2),
                         description: `Deposit approved for ${deposit.reference}`,
-                        
+
                         metadata: {
                             depositId: deposit.id,
                             reference: deposit.reference,

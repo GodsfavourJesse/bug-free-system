@@ -39,7 +39,7 @@ import {
 } from "../../database/enums/share.enum";
 import { adminWalletService } from "../admin/admin-wallet/adminWallet.service";
 import { adminWalletTransactionService } from "../admin/admin-wallet/admin-wallet-transaction/adminWalletTransaction.sevice";
-import { AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
+import { AdminWalletTransactionDirection, AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
 import { randomUUID } from "crypto";
 
 export class SharePurchaseService {
@@ -186,6 +186,8 @@ export class SharePurchaseService {
                         balanceBefore: adminCredit.balanceBefore.toFixed(2),
                         balanceAfter: adminCredit.balanceAfter.toFixed(2),
                         description: `Share purchase credit - ${share.name}`,
+
+                        direction: AdminWalletTransactionDirection.CREDIT,
 
                         metadata: {
                             userId,

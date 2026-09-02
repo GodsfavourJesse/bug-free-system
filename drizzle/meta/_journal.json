@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1788163069711,
-      "tag": "0000_lively_northstar",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1788172796629,
-      "tag": "0001_productive_nebula",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1788246578160,
-      "tag": "0002_sad_zodiak",
+      "when": 1788329689134,
+      "tag": "0000_high_vivisector",
       "breakpoints": true
     }
   ]

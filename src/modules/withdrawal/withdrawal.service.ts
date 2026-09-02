@@ -11,7 +11,7 @@ import { DbExecutor } from "../../database/types/types";
 import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
 import { adminWalletService } from "../admin/admin-wallet/adminWallet.service";
 import { adminWalletTransactionService } from "../admin/admin-wallet/admin-wallet-transaction/adminWalletTransaction.sevice";
-import { AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
+import { AdminWalletTransactionDirection, AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
 
 export class WithdrawalService {
 
@@ -405,6 +405,8 @@ export class WithdrawalService {
 
                         type:
                             AdminWalletTransactionType.WITHDRAWAL,
+
+                        direction: AdminWalletTransactionDirection.DEBIT,
 
                         amount:
                             amount.toFixed(2),

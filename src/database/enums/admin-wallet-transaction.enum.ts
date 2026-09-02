@@ -9,3 +9,8 @@ export enum AdminWalletTransactionType {
     SHARE_RETURN_DEBIT = "share_return_debit",
     UPGRADE_PAYMENT_CREDIT = "upgrade_payment_credit",
 }
+
+export enum AdminWalletTransactionDirection {
+    CREDIT = "credit",
+    DEBIT = "debit",
+}

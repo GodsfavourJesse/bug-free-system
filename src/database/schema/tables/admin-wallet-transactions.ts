@@ -6,13 +6,14 @@ import {
     varchar,
     jsonb,
 } from "drizzle-orm/pg-core";
+
 import { users } from "./users";
+import { AdminWalletTransactionDirection } from "../../enums/admin-wallet-transaction.enum";
 
 export const adminWalletTransactions =
     pgTable(
         "admin_wallet_transactions",
         {
-
             id: uuid("id")
                 .defaultRandom()
                 .primaryKey(),
@@ -23,61 +24,68 @@ export const adminWalletTransactions =
                     () => users.id,
                     {
                         onDelete: "cascade",
-                    }
+                    },
                 ),
 
             type: varchar(
                 "type",
                 {
                     length: 50,
-                }
-            )
-            .notNull(),
+                },
+            ).notNull(),
+
+            direction: varchar(
+                "direction",
+                {
+                    length: 20,
+                    enum: Object.values(
+                        AdminWalletTransactionDirection,
+                    ) as [
+                        AdminWalletTransactionDirection,
+                        ...AdminWalletTransactionDirection[],
+                    ],
+                },
+            ).notNull(),
 
             amount: decimal(
                 "amount",
                 {
                     precision: 18,
                     scale: 2,
-                }
-            )
-            .notNull(),
+                },
+            ).notNull(),
 
             balanceBefore: decimal(
                 "balance_before",
                 {
                     precision: 18,
                     scale: 2,
-                }
-            )
-            .notNull(),
+                },
+            ).notNull(),
 
             balanceAfter: decimal(
                 "balance_after",
                 {
                     precision: 18,
                     scale: 2,
-                }
-            )
-            .notNull(),
+                },
+            ).notNull(),
 
             description: varchar(
                 "description",
                 {
                     length: 255,
-                }
-            )
-            .notNull(),
+                },
+            ).notNull(),
 
             metadata: jsonb(
-                "metadata"
+                "metadata",
             ),
 
             createdAt: timestamp(
-                "created_at"
+                "created_at",
             )
-            .defaultNow()
-            .notNull(),
-
-        }
+                .defaultNow()
+                .notNull(),
+        },
     );

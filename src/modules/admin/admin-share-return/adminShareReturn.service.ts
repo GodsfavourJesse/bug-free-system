@@ -1,4 +1,4 @@
-import { AdminWalletTransactionType } from "../../../database/enums/admin-wallet-transaction.enum";
+import { AdminWalletTransactionDirection, AdminWalletTransactionType } from "../../../database/enums/admin-wallet-transaction.enum";
 import { TransactionStatus, TransactionType } from "../../../database/enums/transaction.enum";
 import { withTransaction } from "../../../database/transaction/transaction";
 import { DbExecutor } from "../../../database/types/types";
@@ -319,6 +319,8 @@ export class AdminShareReturnService {
                         balanceBefore: adminDebit.balanceBefore.toFixed(2),
                         balanceAfter: adminDebit.balanceAfter.toFixed(2),
                         description: `Share return paid to ${data.shareName}.`,
+
+                        direction: AdminWalletTransactionDirection.DEBIT,
 
                         metadata: {
                             userId: purchase.userId,

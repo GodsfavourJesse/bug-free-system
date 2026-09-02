@@ -6,14 +6,43 @@ import {
     gte,
     sql,
 } from "drizzle-orm";
-import { DbExecutor } from "../../../database/types/types";
+
+import {
+    DbExecutor,
+} from "../../../database/types/types";
+
 import { db } from "../../../database";
-import { membershipPlans, notifications, transactions, upgradeRequests, users, withdrawals } from "../../../database/schema";
-import { UpgradeRequestStatus } from "../../../database/enums/upgrade.enum";
-import { WithdrawalStatus } from "../../../database/enums/withdrawal.enum";
-import { TransactionStatus, TransactionType } from "../../../database/enums/transaction.enum";
+
+import {
+    adminWalletTransactions,
+    membershipPlans,
+    notifications,
+    transactions,
+    upgradeRequests,
+    users,
+    withdrawals,
+} from "../../../database/schema";
+
+
+import {
+    UpgradeRequestStatus,
+} from "../../../database/enums/upgrade.enum";
+
+import {
+    WithdrawalStatus,
+} from "../../../database/enums/withdrawal.enum";
+
+import {
+    TransactionStatus,
+} from "../../../database/enums/transaction.enum";
+import { AdminWalletTransactionDirection } from "../../../database/enums/admin-wallet-transaction.enum";
+
 
 export class DashboardRepository {
+
+    // ============================================================
+    // DASHBOARD STATISTICS
+    // ============================================================
 
     async findStatistics(
         executor: DbExecutor = db,
@@ -26,14 +55,23 @@ export class DashboardRepository {
             pendingUpgrades,
             pendingWithdrawals,
             completedTransactions,
-            revenue,
+            adminCredits,
+            adminDebits,
         ] = await Promise.all([
+
+            // ====================================================
+            // TOTAL USERS
+            // ====================================================
 
             executor
                 .select({
                     value: count(),
                 })
                 .from(users),
+
+            // ====================================================
+            // ACTIVE USERS
+            // ====================================================
 
             executor
                 .select({
@@ -47,6 +85,10 @@ export class DashboardRepository {
                     ),
                 ),
 
+            // ====================================================
+            // VERIFIED USERS
+            // ====================================================
+
             executor
                 .select({
                     value: count(),
@@ -58,6 +100,10 @@ export class DashboardRepository {
                         true,
                     ),
                 ),
+
+            // ====================================================
+            // PENDING UPGRADES
+            // ====================================================
 
             executor
                 .select({
@@ -71,6 +117,10 @@ export class DashboardRepository {
                     ),
                 ),
 
+            // ====================================================
+            // PENDING WITHDRAWALS
+            // ====================================================
+
             executor
                 .select({
                     value: count(),
@@ -83,6 +133,13 @@ export class DashboardRepository {
                     ),
                 ),
 
+            // ====================================================
+            // COMPLETED USER TRANSACTIONS
+            //
+            // This remains available as a general transaction count.
+            // It is NOT used to calculate admin revenue.
+            // ====================================================
+
             executor
                 .select({
                     value: count(),
@@ -95,31 +152,115 @@ export class DashboardRepository {
                     ),
                 ),
 
+            // ====================================================
+            // ADMIN WALLET CREDITS
+            //
+            // Money entering the admin wallet.
+            //
+            // THIS IS REVENUE.
+            // ====================================================
+
             executor
                 .select({
                     value: sql<string>`
-                        COALESCE(SUM(${transactions.amount}),0)
+                        COALESCE(
+                            SUM(
+                                ${adminWalletTransactions.amount}
+                            ),
+                            0
+                        )
                     `,
                 })
-                .from(transactions)
+                .from(adminWalletTransactions)
                 .where(
                     eq(
-                        transactions.status,
-                        TransactionStatus.COMPLETED,
+                        adminWalletTransactions.direction,
+                        AdminWalletTransactionDirection.CREDIT,
+                    ),
+                ),
+
+            // ====================================================
+            // ADMIN WALLET DEBITS
+            //
+            // Money leaving the admin wallet
+            // and going to users.
+            // ====================================================
+
+            executor
+                .select({
+                    value: sql<string>`
+                        COALESCE(
+                            SUM(
+                                ${adminWalletTransactions.amount}
+                            ),
+                            0
+                        )
+                    `,
+                })
+                .from(adminWalletTransactions)
+                .where(
+                    eq(
+                        adminWalletTransactions.direction,
+                        AdminWalletTransactionDirection.DEBIT,
                     ),
                 ),
         ]);
 
         return {
-            totalUsers: Number(totalUsers[0].value),
-            activeUsers: Number(activeUsers[0].value),
-            verifiedUsers: Number(verifiedUsers[0].value),
-            pendingUpgradeRequests: Number(pendingUpgrades[0].value),
-            pendingWithdrawals: Number(pendingWithdrawals[0].value),
-            totalTransactions: Number(completedTransactions[0].value),
-            totalRevenue: Number(revenue[0].value),
+            totalUsers:
+                Number(
+                    totalUsers[0]?.value ?? 0,
+                ),
+
+            activeUsers:
+                Number(
+                    activeUsers[0]?.value ?? 0,
+                ),
+
+            verifiedUsers:
+                Number(
+                    verifiedUsers[0]?.value ?? 0,
+                ),
+
+            pendingUpgradeRequests:
+                Number(
+                    pendingUpgrades[0]?.value ?? 0,
+                ),
+
+            pendingWithdrawals:
+                Number(
+                    pendingWithdrawals[0]?.value ?? 0,
+                ),
+
+            totalTransactions:
+                Number(
+                    completedTransactions[0]?.value ?? 0,
+                ),
+
+            // ====================================================
+            // ADMIN REVENUE
+            // ====================================================
+
+            totalRevenue:
+                Number(
+                    adminCredits[0]?.value ?? 0,
+                ),
+
+            // ====================================================
+            // ADMIN DEBITS
+            // ====================================================
+
+            totalAdminDebits:
+                Number(
+                    adminDebits[0]?.value ?? 0,
+                ),
         };
     }
+
+
+    // ============================================================
+    // RECENT ACTIVITIES
+    // ============================================================
 
     async findRecentActivities(
         limit = 15,
@@ -128,41 +269,20 @@ export class DashboardRepository {
 
         return executor
             .select({
-
-                id:
-                    notifications.id,
-
-                title:
-                    notifications.title,
-
-                message:
-                    notifications.message,
-
-                type:
-                    notifications.type,
-
-                createdAt:
-                    notifications.createdAt,
+                id: notifications.id,
+                title: notifications.title,
+                message: notifications.message,
+                type: notifications.type,
+                createdAt: notifications.createdAt,
 
                 user: {
-
-                    id:
-                        users.id,
-
-                    phone:
-                        users.phone,
-
-                    email:
-                        users.email,
-
-                    referralCode:
-                        users.referralCode,
+                    id: users.id,
+                    phone: users.phone,
+                    email: users.email,
+                    referralCode: users.referralCode,
                 },
-
             })
-            .from(
-                notifications,
-            )
+            .from(notifications)
             .leftJoin(
                 users,
                 eq(
@@ -175,10 +295,13 @@ export class DashboardRepository {
                     notifications.createdAt,
                 ),
             )
-            .limit(
-                limit,
-            );
+            .limit(limit);
     }
+
+
+    // ============================================================
+    // PENDING UPGRADE REQUESTS
+    // ============================================================
 
     async findPendingUpgradeRequests(
         limit = 10,
@@ -190,16 +313,21 @@ export class DashboardRepository {
                 id: upgradeRequests.id,
                 amount: upgradeRequests.amount,
                 status: upgradeRequests.status,
-                paymentMethod: upgradeRequests.paymentMethod,
-                paymentProof: upgradeRequests.paymentProof,
-                createdAt: upgradeRequests.createdAt,
-                reference: upgradeRequests.reference,
+                paymentMethod:
+                    upgradeRequests.paymentMethod,
+                paymentProof:
+                    upgradeRequests.paymentProof,
+                createdAt:
+                    upgradeRequests.createdAt,
+                reference:
+                    upgradeRequests.reference,
 
                 user: {
                     id: users.id,
                     phone: users.phone,
                     email: users.email,
-                    referralCode: users.referralCode,
+                    referralCode:
+                        users.referralCode,
                 },
 
                 membership: {
@@ -208,9 +336,7 @@ export class DashboardRepository {
                     slug: membershipPlans.slug,
                 },
             })
-            .from(
-                upgradeRequests,
-            )
+            .from(upgradeRequests)
             .leftJoin(
                 users,
                 eq(
@@ -236,34 +362,42 @@ export class DashboardRepository {
                     upgradeRequests.createdAt,
                 ),
             )
-            .limit(
-                limit,
-            );
+            .limit(limit);
     }
+
+
+    // ============================================================
+    // PENDING WITHDRAWALS
+    // ============================================================
 
     async findPendingWithdrawalRequests(
         limit = 10,
         executor: DbExecutor = db,
     ) {
+
         return executor
             .select({
                 id: withdrawals.id,
                 amount: withdrawals.amount,
-                status: withdrawals.status,          // add this
-                accountName: withdrawals.accountName,
-                accountNumber: withdrawals.accountNumber,
-                bankName: withdrawals.bankName,
-                createdAt: withdrawals.createdAt,
+                status: withdrawals.status,
+                accountName:
+                    withdrawals.accountName,
+                accountNumber:
+                    withdrawals.accountNumber,
+                bankName:
+                    withdrawals.bankName,
+                createdAt:
+                    withdrawals.createdAt,
+
                 user: {
                     id: users.id,
                     phone: users.phone,
                     email: users.email,
-                    referralCode: users.referralCode,
+                    referralCode:
+                        users.referralCode,
                 },
             })
-            .from(
-                withdrawals,
-            )
+            .from(withdrawals)
             .leftJoin(
                 users,
                 eq(
@@ -282,10 +416,13 @@ export class DashboardRepository {
                     withdrawals.createdAt,
                 ),
             )
-            .limit(
-                limit,
-            );
+            .limit(limit);
     }
+
+
+    // ============================================================
+    // MEMBERSHIP DISTRIBUTION
+    // ============================================================
 
     async findMembershipDistribution(
         executor: DbExecutor = db,
@@ -293,25 +430,13 @@ export class DashboardRepository {
 
         return executor
             .select({
-
-                id:
-                    membershipPlans.id,
-
-                name:
-                    membershipPlans.name,
-
-                slug:
-                    membershipPlans.slug,
-
+                id: membershipPlans.id,
+                name: membershipPlans.name,
+                slug: membershipPlans.slug,
                 totalUsers:
-                    count(
-                        users.id,
-                    ),
-
+                    count(users.id),
             })
-            .from(
-                membershipPlans,
-            )
+            .from(membershipPlans)
             .leftJoin(
                 users,
                 eq(
@@ -320,19 +445,24 @@ export class DashboardRepository {
                 ),
             )
             .groupBy(
-
                 membershipPlans.id,
                 membershipPlans.name,
                 membershipPlans.slug,
-
             );
     }
+
+
+    // ============================================================
+    // DAILY ADMIN REVENUE
+    // ============================================================
 
     async findDailyRevenue(
         days = 30,
         executor: DbExecutor = db,
     ) {
-        const startDate = new Date();
+
+        const startDate =
+            new Date();
 
         startDate.setDate(
             startDate.getDate() - days,
@@ -341,52 +471,64 @@ export class DashboardRepository {
         return executor
             .select({
                 date: sql<string>`
-                    DATE(${transactions.createdAt})
+                    DATE(
+                        ${adminWalletTransactions.createdAt}
+                    )
                 `,
 
                 revenue: sql<string>`
                     COALESCE(
-                        SUM(${transactions.amount}),
+                        SUM(
+                            ${adminWalletTransactions.amount}
+                        ),
                         0
                     )
                 `,
             })
-            .from(transactions)
+            .from(adminWalletTransactions)
             .where(
-                and (
+                and(
                     eq(
-                        transactions.status,
-                        TransactionStatus.COMPLETED,
+                        adminWalletTransactions.direction,
+                        AdminWalletTransactionDirection.CREDIT,
                     ),
-                    eq(
-                        transactions.type,
-                        TransactionType.PURCHASE,
-                    ),
+
                     gte(
-                        transactions.createdAt,
+                        adminWalletTransactions.createdAt,
                         startDate,
                     ),
                 ),
             )
             .groupBy(
                 sql`
-                    DATE(${transactions.createdAt})
+                    DATE(
+                        ${adminWalletTransactions.createdAt}
+                    )
                 `,
             )
             .orderBy(
                 desc(
                     sql`
-                        DATE(${transactions.createdAt})
+                        DATE(
+                            ${adminWalletTransactions.createdAt}
+                        )
                     `,
                 ),
             );
     }
 
+
+    // ============================================================
+    // USER GROWTH
+    // ============================================================
+
     async findUserGrowth(
         days = 30,
         executor: DbExecutor = db,
     ) {
-        const startDate = new Date();
+
+        const startDate =
+            new Date();
 
         startDate.setDate(
             startDate.getDate() - days,
@@ -394,10 +536,17 @@ export class DashboardRepository {
 
         return executor
             .select({
-                date: sql<string>`DATE(${users.createdAt})`,
-                users: sql<number>`COUNT(*)`,   // renamed from totalUsers
+                date: sql<string>`
+                    DATE(
+                        ${users.createdAt}
+                    )
+                `,
+
+                users: sql<number>`
+                    COUNT(*)
+                `,
             })
-            .from( users )
+            .from(users)
             .where(
                 gte(
                     users.createdAt,
@@ -406,17 +555,23 @@ export class DashboardRepository {
             )
             .groupBy(
                 sql`
-                    DATE(${users.createdAt})
+                    DATE(
+                        ${users.createdAt}
+                    )
                 `,
             )
             .orderBy(
                 desc(
                     sql`
-                        DATE(${users.createdAt})
+                        DATE(
+                            ${users.createdAt}
+                        )
                     `,
                 ),
             );
     }
 }
 
-export const dashboardRepository = new DashboardRepository();
+
+export const dashboardRepository =
+    new DashboardRepository();

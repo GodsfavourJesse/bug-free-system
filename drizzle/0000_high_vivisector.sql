@@ -6,6 +6,8 @@ CREATE TYPE "public"."advertisement_status" AS ENUM('draft', 'active', 'inactive
 CREATE TYPE "public"."deposit_status" AS ENUM('pending', 'under_review', 'approved', 'declined', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."share_status" AS ENUM('started', 'in_progress', 'closed');--> statement-breakpoint
 CREATE TYPE "public"."share_purchase_status" AS ENUM('active', 'completed', 'return_credited');--> statement-breakpoint
+CREATE TYPE "public"."support_conversation_status" AS ENUM('open', 'closed');--> statement-breakpoint
+CREATE TYPE "public"."support_message_sender" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"phone" varchar(20) NOT NULL,
@@ -229,6 +231,7 @@ CREATE TABLE "admin_wallet_transactions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"admin_id" uuid NOT NULL,
 	"type" varchar(50) NOT NULL,
+	"direction" varchar(20) NOT NULL,
 	"amount" numeric(18, 2) NOT NULL,
 	"balance_before" numeric(18, 2) NOT NULL,
 	"balance_after" numeric(18, 2) NOT NULL,
@@ -281,6 +284,46 @@ CREATE TABLE "share_purchases" (
 	CONSTRAINT "share_purchases_total_return_positive" CHECK ("share_purchases"."total_return_amount" > 0)
 );
 --> statement-breakpoint
+CREATE TABLE "support_conversations" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"status" "support_conversation_status" DEFAULT 'open' NOT NULL,
+	"last_message_at" timestamp DEFAULT now() NOT NULL,
+	"user_unread_count" integer DEFAULT 0 NOT NULL,
+	"admin_unread_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "support_messages" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"conversation_id" uuid NOT NULL,
+	"sender_id" uuid NOT NULL,
+	"sender_type" "support_message_sender" NOT NULL,
+	"message" text NOT NULL,
+	"is_read" boolean DEFAULT false NOT NULL,
+	"read_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "corporate_announcements" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"title" varchar(150) NOT NULL,
+	"message" text NOT NULL,
+	"created_by" uuid NOT NULL,
+	"is_published" boolean DEFAULT true NOT NULL,
+	"published_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "corporate_announcement_reads" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"announcement_id" uuid NOT NULL,
+	"user_id" uuid NOT NULL,
+	"read_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_membership_plan_fk" FOREIGN KEY ("membership_plan_id") REFERENCES "public"."membership_plans"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_referred_by_fk" FOREIGN KEY ("referred_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -314,6 +357,12 @@ ALTER TABLE "shares" ADD CONSTRAINT "shares_created_by_fk" FOREIGN KEY ("created
 ALTER TABLE "share_purchases" ADD CONSTRAINT "share_purchases_user_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "share_purchases" ADD CONSTRAINT "share_purchases_share_fk" FOREIGN KEY ("share_id") REFERENCES "public"."shares"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "share_purchases" ADD CONSTRAINT "share_purchases_wallet_fk" FOREIGN KEY ("wallet_id") REFERENCES "public"."wallets"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "support_conversations" ADD CONSTRAINT "support_conversations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "support_messages" ADD CONSTRAINT "support_messages_conversation_id_support_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."support_conversations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "support_messages" ADD CONSTRAINT "support_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "corporate_announcements" ADD CONSTRAINT "corporate_announcements_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "corporate_announcement_reads" ADD CONSTRAINT "corporate_announcement_reads_announcement_id_corporate_announcements_id_fk" FOREIGN KEY ("announcement_id") REFERENCES "public"."corporate_announcements"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "corporate_announcement_reads" ADD CONSTRAINT "corporate_announcement_reads_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "users_membership_plan_idx" ON "users" USING btree ("membership_plan_id");--> statement-breakpoint
 CREATE INDEX "users_phone_idx" ON "users" USING btree ("phone");--> statement-breakpoint
 CREATE INDEX "users_email_idx" ON "users" USING btree ("email");--> statement-breakpoint
@@ -342,8 +391,9 @@ CREATE INDEX "upgrade_requests_created_at_idx" ON "upgrade_requests" USING btree
 CREATE UNIQUE INDEX "upgrade_requests_reference_idx" ON "upgrade_requests" USING btree ("reference");--> statement-breakpoint
 CREATE INDEX "upgrade_requests_transaction_idx" ON "upgrade_requests" USING btree ("transaction_id");--> statement-breakpoint
 CREATE INDEX "notifications_user_idx" ON "notifications" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "notifications_user_created_idx" ON "notifications" USING btree ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "notifications_user_read_idx" ON "notifications" USING btree ("user_id","is_read");--> statement-breakpoint
 CREATE INDEX "notifications_type_idx" ON "notifications" USING btree ("type");--> statement-breakpoint
-CREATE INDEX "notifications_read_idx" ON "notifications" USING btree ("is_read");--> statement-breakpoint
 CREATE INDEX "notifications_created_at_idx" ON "notifications" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "deposits_user_idx" ON "deposits" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "deposits_wallet_idx" ON "deposits" USING btree ("wallet_id");--> statement-breakpoint
@@ -361,4 +411,16 @@ CREATE INDEX "share_purchases_status_idx" ON "share_purchases" USING btree ("sta
 CREATE INDEX "share_purchases_expires_at_idx" ON "share_purchases" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "share_purchases_purchased_at_idx" ON "share_purchases" USING btree ("purchased_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "share_purchases_purchase_reference_unique" ON "share_purchases" USING btree ("purchase_reference");--> statement-breakpoint
-CREATE UNIQUE INDEX "share_purchases_return_reference_unique" ON "share_purchases" USING btree ("return_reference");
+CREATE UNIQUE INDEX "share_purchases_return_reference_unique" ON "share_purchases" USING btree ("return_reference");--> statement-breakpoint
+CREATE UNIQUE INDEX "support_conversations_user_unique" ON "support_conversations" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "support_conversations_status_idx" ON "support_conversations" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "support_conversations_last_message_idx" ON "support_conversations" USING btree ("last_message_at");--> statement-breakpoint
+CREATE INDEX "support_conversations_user_idx" ON "support_conversations" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "support_messages_conversation_idx" ON "support_messages" USING btree ("conversation_id");--> statement-breakpoint
+CREATE INDEX "support_messages_sender_idx" ON "support_messages" USING btree ("sender_id");--> statement-breakpoint
+CREATE INDEX "support_messages_created_at_idx" ON "support_messages" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "support_messages_read_idx" ON "support_messages" USING btree ("is_read");--> statement-breakpoint
+CREATE INDEX "corporate_announcements_published_idx" ON "corporate_announcements" USING btree ("is_published","published_at");--> statement-breakpoint
+CREATE INDEX "corporate_announcements_created_by_idx" ON "corporate_announcements" USING btree ("created_by");--> statement-breakpoint
+CREATE INDEX "corporate_announcements_created_at_idx" ON "corporate_announcements" USING btree ("created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "corporate_announcement_user_unique" ON "corporate_announcement_reads" USING btree ("announcement_id","user_id");

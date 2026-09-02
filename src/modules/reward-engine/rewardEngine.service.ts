@@ -60,6 +60,7 @@ import {
 } from "../admin/admin-wallet/admin-wallet-transaction/adminWalletTransaction.repository";
 
 import {
+    AdminWalletTransactionDirection,
     AdminWalletTransactionType,
 } from "../../database/enums/admin-wallet-transaction.enum";
 
@@ -396,6 +397,8 @@ export class RewardEngineService {
                     type:
                         AdminWalletTransactionType
                             .REWARD_PAYOUT,
+
+                    direction: AdminWalletTransactionDirection.DEBIT,
 
                     amount:
                         dto.amount.toFixed(2),

@@ -10,6 +10,7 @@ import {
 } from "../../../database/enums/upgrade.enum";
 
 import {
+    AdminWalletTransactionDirection,
     AdminWalletTransactionType,
 } from "../../../database/enums/admin-wallet-transaction.enum";
 
@@ -578,6 +579,8 @@ export class AdminUpgradeService {
                             description:
                                 `Membership upgrade payment received from user ${user.id}.`,
 
+                            direction: AdminWalletTransactionDirection.CREDIT,
+                            
                             metadata: {
                                 direction:
                                     "CREDIT",

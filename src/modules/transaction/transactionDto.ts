@@ -1,4 +1,4 @@
-import { AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
+import { AdminWalletTransactionDirection, AdminWalletTransactionType } from "../../database/enums/admin-wallet-transaction.enum";
 import { TransactionStatus, TransactionType } from "../../database/enums/transaction.enum";
 
 export interface CommissionTransactionMetadata {
@@ -43,5 +43,6 @@ export interface CreateAdminWalletTransactionDto {
     balanceBefore: string;
     balanceAfter: string;
     description: string;
+    direction: AdminWalletTransactionDirection;
     metadata?: Record<string, unknown>;
 }
